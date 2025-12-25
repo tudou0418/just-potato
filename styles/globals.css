@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* 移除原来的 @media (prefers-color-scheme: dark) */
+/* 改为跟随 .dark 类名 */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
