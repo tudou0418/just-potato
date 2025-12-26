@@ -5,26 +5,51 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ThemeProvider from '../components/ThemeProvider';
 import "./globals.css";
-
+// 导入styles里面的globals.css以应用全局样式
 export const metadata: Metadata = {
   title: "我的个人博客 | 技术与分享",
   description: "探索前端技术与生活的个人博客空间",
 };
 
+// export default function RootLayout({
+//   children,
+// }: Readonly<{
+//   children: React.ReactNode;
+// }>) {
+//   return (
+//     /**
+//      * suppressHydrationWarning 是使用 next-themes 的关键，
+//      * 它能防止浏览器在切换主题时产生不匹配的警告。
+//      */
+//     <html lang="zh-CN" suppressHydrationWarning>
+//       <body className="antialiased font-sans">
+//         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+//           <div className="flex min-h-screen flex-col text-slate-900 dark:bg-zinc-950 dark:text-zinc-50 transition-colors duration-300">
+//             <Header />
+//             <main className="flex-grow">
+//               {children}
+//             </main>
+//             <Footer />
+//           </div>
+//         </ThemeProvider>
+//       </body>
+//     </html>
+//   );
+// }
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    /**
-     * suppressHydrationWarning 是使用 next-themes 的关键，
-     * 它能防止浏览器在切换主题时产生不匹配的警告。
-     */
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="antialiased font-sans">
+        {/* attribute="class" 会将 .dark 类添加到 <html> 标签上 */}
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="flex min-h-screen flex-col text-slate-900 dark:bg-zinc-950 dark:text-zinc-50 transition-colors duration-300">
+          {/* 注意：移除了外层 div 的 dark:bg-zinc-950，
+              因为我们在 globals.css 的 body 里已经通过变量处理了背景 
+          */}
+          <div className="flex min-h-screen flex-col">
             <Header />
             <main className="flex-grow">
               {children}

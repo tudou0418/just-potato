@@ -1,9 +1,7 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @theme inline {
   --color-background: var(--background);
@@ -23,4 +21,46 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+ */
+
+ @import "tailwindcss";
+
+/* 定义基础变量 */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+/* 默认（亮色）模式 */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* 强制暗色模式（当 html/body 拥有 .dark 类时） */
+/* 注意：在 v4 中，我们需要显式声明 .dark 样式 */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+/* 全局基础样式 */
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    /* 移除之前硬编码的 Arial，使用继承或 Tailwind 字体 */
+    @apply transition-colors duration-300;
+  }
 }

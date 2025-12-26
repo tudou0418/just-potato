@@ -1,9 +1,15 @@
+'use client';  
 import React from 'react';
 import { Github, Twitter, Mail } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 const Footer = () => {
+  const { resolvedTheme } = useTheme(); // 获取当前的主题
+
   return (
-    <footer className="py-16 border-t border-gray-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
+    <footer 
+      className={`py-16 border-t border-gray-100 ${resolvedTheme === 'dark' ? 'dark:border-zinc-900 bg-zinc-950' : 'bg-white border-gray-100'}`}
+    >
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="space-y-2">
@@ -13,18 +19,18 @@ const Footer = () => {
             </p>
           </div>
 
-          <div className="flex gap-6 text-sm font-bold text-gray-400">
+          <div className="flex gap-6 text-sm font-bold text-gray-400 dark:text-zinc-400">
             <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Github</a>
             <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">RSS</a>
             <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">隐私政策</a>
           </div>
 
           <div className="flex items-center gap-4">
-             {[Github, Twitter, Mail].map((Icon, i) => (
-                <a key={i} href="#" className="p-2 text-gray-400 hover:text-blue-600 transition-all">
-                  <Icon size={18} />
-                </a>
-              ))}
+            {[Github, Twitter, Mail].map((Icon, i) => (
+              <a key={i} href="#" className="p-2 text-gray-400 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-all">
+                <Icon size={18} />
+              </a>
+            ))}
           </div>
         </div>
         
