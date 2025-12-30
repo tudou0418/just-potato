@@ -66,6 +66,7 @@ const FRIEND_LINKS = [
 ];
 
 // --- 页面区块组件 ---
+
 const Hero = () => (
   <section className="py-20 md:py-32">
     <div className="container mx-auto px-6 flex flex-col-reverse md:flex-row items-center gap-12">
@@ -92,19 +93,8 @@ const Hero = () => (
           </div>
         </div>
       </div>
-      {/* <div className="relative">
-        <div className="absolute -inset-4 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur-3xl opacity-10 dark:opacity-30 animate-pulse"></div>
-        <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-[2.5rem] rotate-3 bg-gradient-to-br from-blue-600 to-indigo-700 p-1.5 shadow-2xl shadow-blue-500/20">
-          <div className="w-full h-full rounded-[2.2rem] bg-white dark:bg-zinc-950 flex items-center justify-center">
-             <div className="text-blue-600 dark:text-blue-400 font-black text-6xl text-center">KV</div>
-          </div>
-        </div>
-      </div> */}
+      
       <div className="relative">
-        {/* 背景光晕 */}
-        <div className="absolute -inset-4 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur-3xl opacity-10 dark:opacity-30 animate-pulse"></div>
-        
-        <div className="relative">
         {/* 背景光晕 */}
         <div className="absolute -inset-4 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur-3xl opacity-10 dark:opacity-30 animate-pulse"></div>
         
@@ -116,13 +106,16 @@ const Hero = () => (
                 alt="Avatar" 
                 className="w-full h-full object-cover transition-all duration-500"
                 onError={(e) => {
+                  // 修复 TypeScript 部署错误：parentElement 可能为 null
                   e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement.innerHTML = '<div class="text-blue-600 dark:text-blue-400 font-black text-6xl">KV</div>';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    parent.innerHTML = '<div class="text-blue-600 dark:text-blue-400 font-black text-6xl">KV</div>';
+                  }
                 }}
              />
           </div>
         </div>
-      </div>
       </div>
     </div>
   </section>
@@ -232,7 +225,10 @@ export default function Home() {
       <Hero />
       <TechStack />
       <Projects />
+      
+      {/* 友链区域 */}
       <FriendLinks />
+
       <section className="py-24 bg-zinc-50 dark:bg-zinc-900/50 rounded-[4rem] mx-4 mb-20 border border-zinc-100 dark:border-zinc-800">
         <div className="container mx-auto px-6 text-center">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">开始阅读</h2>
