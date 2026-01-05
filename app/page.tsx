@@ -287,7 +287,7 @@ const HeroVariant = () => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   // 根据 count 获取颜色等级
-  const getLevelColor = (count) => {
+  const getLevelColor = (count: number | undefined) => {
     if (count === 0) return 'bg-ui-border/30';
     if (count === 1) return 'bg-brand/20';
     if (count === 2) return 'bg-brand/45';
