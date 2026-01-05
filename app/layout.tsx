@@ -10,32 +10,6 @@ export const metadata: Metadata = {
   title: "我的个人博客 | 技术与分享",
   description: "探索前端技术与生活的个人博客空间",
 };
-
-// export default function RootLayout({
-//   children,
-// }: Readonly<{
-//   children: React.ReactNode;
-// }>) {
-//   return (
-//     /**
-//      * suppressHydrationWarning 是使用 next-themes 的关键，
-//      * 它能防止浏览器在切换主题时产生不匹配的警告。
-//      */
-//     <html lang="zh-CN" suppressHydrationWarning>
-//       <body className="antialiased font-sans">
-//         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-//           <div className="flex min-h-screen flex-col text-slate-900 dark:bg-zinc-950 dark:text-zinc-50 transition-colors duration-300">
-//             <Header />
-//             <main className="flex-grow">
-//               {children}
-//             </main>
-//             <Footer />
-//           </div>
-//         </ThemeProvider>
-//       </body>
-//     </html>
-//   );
-// }
 export default function RootLayout({
   children,
 }: Readonly<{

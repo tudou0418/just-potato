@@ -1,68 +1,59 @@
-"use client";
 import React from 'react';
 import { 
   Github, 
   Twitter, 
   Mail, 
   ExternalLink, 
-  BookOpen, 
-  Cpu, 
   Layers,
   ChevronRight,
   Link as LinkIcon,
-  Users
+  Users,
+  Sparkles
 } from 'lucide-react';
+
+/**
+ * 💡 重构要点：
+ * 1. 使用 text-ui-text 替代 text-gray-900/text-white
+ * 2. 使用 bg-ui-surface 替代 bg-white/bg-zinc-900
+ * 3. 使用 border-ui-border 替代 border-zinc-200
+ * 4. 使用 bg-brand 和 text-brand 替代蓝色的硬编码
+ * 5. 使用 p-safe 和 rounded-smooth 统一间距和圆角
+ */
 
 // --- 数据配置 ---
 const TECH_STACK = [
-  { name: 'Next.js', color: 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' },
-  { name: 'TypeScript', color: 'bg-blue-600 text-white' },
-  { name: 'Tailwind CSS', color: 'bg-cyan-500 text-white' },
-  { name: 'React', color: 'bg-sky-400 text-white' },
-  { name: 'Node.js', color: 'bg-green-600 text-white' },
+  { name: 'Next.js', color: 'bg-brand text-white shadow-brand/20 shadow-lg' },
+  { name: 'TypeScript', color: 'bg-brand/80 text-white' },
+  { name: 'Tailwind v4', color: 'bg-brand/60 text-white' },
+  { name: 'React', color: 'bg-brand/40 text-brand font-bold' },
+  { name: 'Node.js', color: 'bg-brand/20 text-brand font-bold' },
 ];
 
 const PROJECTS = [
   {
     title: '我的个人博客',
-    description: '基于 Next.js 14 构建的现代化响应式博客，支持暗色模式。',
-    tags: ['Next.js', 'Tailwind'],
+    description: '基于 Next.js 14 构建的现代化响应式博客，支持一键切换暗色模式。',
+    tags: ['Next.js', 'Theme v4'],
     link: '#'
   },
   {
     title: 'AI 辅助工具',
-    description: '集成大语言模型的生产力工具，支持实时对话。',
-    tags: ['OpenAI', 'Next.js'],
+    description: '集成大语言模型的生产力工具，完美适配多种品牌配色方案。',
+    tags: ['OpenAI', 'Config'],
     link: '#'
   },
   {
     title: 'UI 设计系统',
-    description: '一套基于 Tailwind 的精美组件库。',
-    tags: ['Design', 'React'],
+    description: '一套基于 CSS 变量驱动的精美组件库。',
+    tags: ['Design', 'Atomic'],
     link: '#'
   }
 ];
 
-// --- 友链配置 ---
 const FRIEND_LINKS = [
-  {
-    name: "愧怍",
-    url: "https://kuizuo.cn",
-    description: "在这个漫漫人生路，我只想留下一路足迹。",
-    avatar: "K"
-  },
-  {
-    name: "示例友链",
-    url: "#",
-    description: "这是一个优秀的博客示例，欢迎互换友链。",
-    avatar: "E"
-  },
-  {
-    name: "技术交流",
-    url: "#",
-    description: "记录技术感悟，分享生活点滴。",
-    avatar: "T"
-  }
+  { name: "愧怍", url: "https://kuizuo.cn", description: "人生漫漫，只想留下一路足迹。", avatar: "K" },
+  { name: "示例友链", url: "#", description: "优秀的博客示例，欢迎互换友链。", avatar: "E" },
+  { name: "技术交流", url: "#", description: "记录技术感悟，分享生活点滴。", avatar: "T" }
 ];
 
 // --- 页面区块组件 ---
@@ -72,21 +63,23 @@ const Hero = () => (
     <div className="container mx-auto px-6 flex flex-col-reverse md:flex-row items-center gap-12">
       <div className="flex-1 space-y-8 text-center md:text-left">
         <div className="space-y-4">
-          <h2 className="text-blue-600 dark:text-blue-400 font-bold tracking-widest text-sm uppercase">Welcome to my space</h2>
-          <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl text-gray-900 dark:text-white leading-[1.1]">
-            构建 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">有温度</span> 的代码
+          <h2 className="text-brand font-bold tracking-widest text-sm uppercase flex items-center justify-center md:justify-start gap-2">
+            <Sparkles size={16} /> Welcome to my space
+          </h2>
+          <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl text-ui-text leading-[1.1]">
+            构建 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-dark">有温度</span> 的代码
           </h1>
         </div>
-        <p className="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto md:mx-0 leading-relaxed">
-          我是 <span className="text-gray-900 dark:text-white font-bold">土豆</span>。一名专注于前端技术的开发者，在这里记录我的成长历程。
+        <p className="text-xl text-ui-text opacity-70 max-w-2xl mx-auto md:mx-0 leading-relaxed">
+          我是 <span className="text-brand font-black underline decoration-brand/30 underline-offset-8">土豆</span>。一名专注于前端技术的开发者，在这里记录我的成长历程。
         </p>
         <div className="flex items-center justify-center md:justify-start gap-4">
-          <button className="px-8 py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-bold hover:scale-105 transition-transform shadow-lg">
+          <button className="px-8 py-4 bg-brand hover:bg-brand-dark text-white rounded-smooth font-bold hover:scale-105 transition-all shadow-lg shadow-brand/20">
             浏览项目
           </button>
           <div className="flex items-center gap-2">
             {[Github, Twitter, Mail].map((Icon, i) => (
-              <a key={i} href="#" className="p-3 text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-zinc-200 dark:border-zinc-800 rounded-2xl">
+              <a key={i} href="#" className="p-3 text-ui-text opacity-50 hover:opacity-100 hover:text-brand transition-all border border-ui-border rounded-smooth bg-ui-surface">
                 <Icon size={20} />
               </a>
             ))}
@@ -95,25 +88,10 @@ const Hero = () => (
       </div>
       
       <div className="relative">
-        {/* 背景光晕 */}
-        <div className="absolute -inset-4 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur-3xl opacity-10 dark:opacity-30 animate-pulse"></div>
-        
-        {/* 图片外框：正圆形边框 */}
-        <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 p-1 shadow-2xl transition-transform hover:scale-105 duration-500">
-          <div className="w-full h-full rounded-full bg-white dark:bg-zinc-950 flex items-center justify-center overflow-hidden">
-             <img 
-                src="/avatar.png" 
-                alt="Avatar" 
-                className="w-full h-full object-cover transition-all duration-500"
-                onError={(e) => {
-                  // 修复 TypeScript 部署错误：parentElement 可能为 null
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) {
-                    parent.innerHTML = '<div class="text-blue-600 dark:text-blue-400 font-black text-6xl">KV</div>';
-                  }
-                }}
-             />
+        <div className="absolute -inset-4 bg-brand rounded-full blur-3xl opacity-10 animate-pulse"></div>
+        <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full bg-gradient-to-br from-brand to-brand-dark p-1 shadow-brand">
+          <div className="w-full h-full rounded-full bg-ui-surface flex items-center justify-center overflow-hidden">
+            <div className="text-brand font-black text-6xl">KV</div>
           </div>
         </div>
       </div>
@@ -122,18 +100,18 @@ const Hero = () => (
 );
 
 const TechStack = () => (
-  <section className="py-12 border-y border-zinc-100 dark:border-zinc-900">
+  <section className="py-12 border-y border-ui-border bg-ui-surface/50 backdrop-blur-sm">
     <div className="container mx-auto px-6">
-        <div className="flex flex-wrap items-center justify-center md:justify-between gap-6">
-            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Tech Stack</h3>
-            <div className="flex flex-wrap gap-3 justify-center">
-                {TECH_STACK.map((tech) => (
-                <span key={tech.name} className={`px-5 py-2 rounded-2xl text-sm font-bold transition-colors ${tech.color}`}>
-                    {tech.name}
-                </span>
-                ))}
-            </div>
+      <div className="flex flex-wrap items-center justify-center md:justify-between gap-6">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-40">Tech Stack</h3>
+        <div className="flex flex-wrap gap-3 justify-center">
+          {TECH_STACK.map((tech) => (
+            <span key={tech.name} className={`px-5 py-2 rounded-full text-sm font-bold transition-all hover:-translate-y-1 ${tech.color}`}>
+              {tech.name}
+            </span>
+          ))}
         </div>
+      </div>
     </div>
   </section>
 );
@@ -143,28 +121,28 @@ const Projects = () => (
     <div className="container mx-auto px-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">精选项目</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 font-medium text-lg">通过这些项目了解我的工程实践。</p>
+          <h2 className="text-3xl font-bold text-ui-text mb-4">精选项目</h2>
+          <p className="text-ui-text opacity-60 font-medium text-lg">通过这些项目了解我的工程实践。</p>
         </div>
-        <a href="#" className="group flex items-center gap-2 font-bold text-blue-600 dark:text-blue-400 transition-colors">
+        <a href="#" className="group flex items-center gap-2 font-bold text-brand transition-colors">
           全部项目 <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
         </a>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {PROJECTS.map((project, idx) => (
-          <div key={idx} className="group flex flex-col rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-8 shadow-sm hover:shadow-2xl transition-all duration-300">
-            <div className="mb-6 w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <Layers size={24} />
+          <div key={idx} className="group flex flex-col rounded-smooth border border-ui-border bg-ui-surface p-safe shadow-sm hover:shadow-brand hover:-translate-y-2 transition-all duration-300">
+            <div className="mb-6 w-12 h-12 rounded-xl bg-brand/10 flex items-center justify-center text-brand">
+              <Layers size={24} />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{project.title}</h3>
-            <p className="mt-4 text-zinc-500 dark:text-zinc-400 flex-grow leading-relaxed">{project.description}</p>
+            <h3 className="text-2xl font-bold text-ui-text group-hover:text-brand transition-colors">{project.title}</h3>
+            <p className="mt-4 text-ui-text opacity-60 flex-grow leading-relaxed">{project.description}</p>
             <div className="mt-8 flex items-center justify-between">
               <div className="flex gap-2">
                 {project.tags.map(tag => (
-                   <span key={tag} className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-xs font-bold text-zinc-400">{tag}</span>
+                  <span key={tag} className="px-3 py-1 bg-brand/5 rounded-lg text-xs font-bold text-brand">{tag}</span>
                 ))}
               </div>
-              <a href={project.link} className="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors">
+              <a href={project.link} className="p-2 rounded-full hover:bg-brand/10 text-brand transition-colors">
                 <ExternalLink size={20} />
               </a>
             </div>
@@ -175,16 +153,15 @@ const Projects = () => (
   </section>
 );
 
-// --- 友链区域组件 ---
 const FriendLinks = () => (
   <section className="py-24">
     <div className="container mx-auto px-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
         <div>
-          <h2 className="flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            <Users className="text-blue-600 dark:text-blue-400" size={32} /> 友情链接
+          <h2 className="flex items-center gap-3 text-3xl font-bold text-ui-text mb-4">
+            <Users className="text-brand" size={32} /> 友情链接
           </h2>
-          <p className="text-zinc-500 dark:text-zinc-400 font-medium text-lg">
+          <p className="text-ui-text opacity-60 font-medium text-lg">
             与优秀的人并肩而行，记录值得被发现的角落。
           </p>
         </div>
@@ -196,21 +173,21 @@ const FriendLinks = () => (
             href={friend.url} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="group flex items-center gap-4 p-5 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-blue-100 dark:hover:border-blue-900 transition-all duration-300"
+            className="group flex items-center gap-4 p-5 rounded-smooth border border-ui-border bg-ui-surface hover:bg-brand/5 hover:border-brand/30 transition-all duration-300"
           >
-            <div className="w-14 h-14 shrink-0 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl font-black group-hover:scale-110 transition-transform">
+            <div className="w-14 h-14 shrink-0 rounded-full bg-brand text-white flex items-center justify-center text-xl font-black group-hover:scale-110 transition-transform">
               {friend.avatar}
             </div>
             <div className="overflow-hidden">
-              <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+              <h3 className="font-bold text-ui-text group-hover:text-brand transition-colors truncate">
                 {friend.name}
               </h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+              <p className="text-sm text-ui-text opacity-50 truncate">
                 {friend.description}
               </p>
             </div>
             <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-              <LinkIcon size={16} className="text-zinc-400" />
+              <LinkIcon size={16} className="text-brand/50" />
             </div>
           </a>
         ))}
@@ -221,23 +198,34 @@ const FriendLinks = () => (
 
 export default function Home() {
   return (
-    <div className="pb-20">
+    <div className="bg-ui-surface min-h-screen transition-colors duration-500">
       <Hero />
       <TechStack />
       <Projects />
-      
-      {/* 友链区域 */}
       <FriendLinks />
 
-      <section className="py-24 bg-zinc-50 dark:bg-zinc-900/50 rounded-[4rem] mx-4 mb-20 border border-zinc-100 dark:border-zinc-800">
-        <div className="container mx-auto px-6 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">开始阅读</h2>
-            <p className="text-zinc-500 mb-10">点击上方导航栏的文章查看更多</p>
-            <div className="w-12 h-12 bg-blue-600 rounded-full mx-auto flex items-center justify-center text-white animate-bounce">
-                <ChevronRight size={24} className="rotate-90" />
-            </div>
+      <section className="py-24 px-6">
+        <div className="container mx-auto bg-brand/5 rounded-smooth p-12 border border-brand/10 text-center">
+          <h2 className="text-3xl font-bold text-ui-text mb-4">准备好开启新篇章了吗？</h2>
+          <p className="text-ui-text opacity-60 mb-10 max-w-md mx-auto">
+            订阅我的周刊，第一时间获取前端技术动向和生活感悟。
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+            <input 
+              type="email" 
+              placeholder="your@email.com" 
+              className="px-6 py-3 bg-ui-surface border border-ui-border rounded-smooth outline-none focus:ring-2 ring-brand transition-all"
+            />
+            <button className="bg-brand text-white px-8 py-3 rounded-smooth font-bold hover:bg-brand-dark transition-colors">
+              立即订阅
+            </button>
+          </div>
         </div>
       </section>
+
+      <footer className="py-12 text-center text-ui-text opacity-40 text-sm">
+        <p>© 2026KV Studio. Built with Tailwind CSS v4 Theme System.</p>
+      </footer>
     </div>
   );
 }
