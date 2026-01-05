@@ -1,59 +1,82 @@
 @import "tailwindcss";
 
-/* 1. 定义翡翠主题的原子变量 */
+/* * 北欧石板 (Nordic Slate) 主题配置
+ * 专注于长文阅读体验，采用低饱和度冷色调。
+ */
+
 :root {
-  /* 品牌色 - 翡翠绿系列 */
-  --brand-base: #10b981;         /* 亮色主色 */
-  --brand-dark: #059669;         /* 亮色深调 */
+  /* 品牌色：沉稳的石板蓝 */
+  --brand-base: #2563eb;         
+  --brand-dark: #1e40af;         
   
   /* UI 基础色 */
-  --ui-surface: #fdfdfd;         /* 极简亮白背景 */
-  --ui-text: #064e3b;            /* 深绿文本（高对比度） */
-  --ui-border: #d1fae5;          /* 浅绿边框 */
+  --ui-surface: #fcfcfd;         /* 极淡冷灰白背景 */
+  --ui-text: #1a1c1e;            /* 深色文本，比纯黑更柔和 */
+  --ui-text-muted: #64748b;      /* 辅助/次要文本 */
+  --ui-border: #e2e8f0;          /* 冷灰色边框 */
   
-  /* 其他装饰 */
-  --shadow-color: rgba(16, 185, 129, 0.2);
+  /* 阴影配置 */
+  --shadow-color: rgba(15, 23, 42, 0.08);
 }
 
-/* 2. 深色模式变量覆盖 */
 .dark {
-  /* 品牌色 - 在深色背景下提高亮度以获得更好的对比度 */
-  --brand-base: #34d399;         
-  --brand-dark: #10b981;
+  /* 深色模式：深海蓝黑 */
+  --brand-base: #60a5fa;         
+  --brand-dark: #3b82f6;         
   
   /* UI 基础色 */
-  --ui-surface: #061a14;         /* 深翡翠黑背景 */
-  --ui-text: #ecfdf5;            /* 近白色文本 */
-  --ui-border: #065f46;          /* 深绿边框 */
+  --ui-surface: #0f1115;         /* 深蓝黑背景 */
+  --ui-text: #f1f5f9;            /* 冷白文本 */
+  --ui-text-muted: #94a3b8;      /* 深色模式下的辅助文本 */
+  --ui-border: #1e293b;          /* 深色模式边框 */
   
-  --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
-/* 3. 映射到 Tailwind v4 设计系统 */
 @theme {
-  /* 颜色系统 */
+  /* 映射颜色系统 */
   --color-brand: var(--brand-base);
   --color-brand-dark: var(--brand-dark);
   --color-ui-surface: var(--ui-surface);
   --color-ui-text: var(--ui-text);
+  --color-ui-text-muted: var(--ui-text-muted);
   --color-ui-border: var(--ui-border);
 
-  /* 阴影系统 */
-  --shadow-brand: 0 10px 15px -3px var(--shadow-color);
+  /* 映射阴影系统 */
+  --shadow-brand: 0 4px 20px -2px var(--shadow-color);
   
-  /* 布局与形状（可选自定义） */
-  --spacing-safe: 1.25rem;
-  --radius-smooth: 1.25rem;
+  /* 布局预设 */
+  --spacing-safe: 1.5rem;
+  --radius-smooth: 0.75rem;
 }
 
-/* 4. 全局基础样式 */
+/* 基础样式全局优化 */
 body {
   background-color: var(--ui-surface);
   color: var(--ui-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* 针对输入框等组件的全局优化 */
-input, button {
-  transition: all 0.2s ease;
+/* 博客正文排版优化 */
+article p {
+  margin-bottom: 1.5rem;
+  font-size: 1.125rem;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ui-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ui-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-base);
 }
