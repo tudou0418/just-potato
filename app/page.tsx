@@ -409,7 +409,12 @@ const HeroVariant = () => {
 /**
  * @param {{ icon: React.ReactNode, href: string, label: string }} props
  */
-function SocialIcon({ icon, href, label }) {
+type SocialIconProps = {
+  icon: React.ReactNode;
+  href: string;
+  label: string;
+};
+function SocialIcon({ icon, href, label }: SocialIconProps) {
   return (
     <a 
       href={href} 
@@ -421,10 +426,15 @@ function SocialIcon({ icon, href, label }) {
   );
 }
 
+type InfoItemProps = {
+  icon: React.ReactNode;
+  text: string;
+  href?: string;
+};
 /**
  * @param {{ icon: React.ReactNode, text: string, href?: string }} props
  */
-function InfoItem({ icon, text, href }) {
+function InfoItem({ icon, text, href }: InfoItemProps) {
   return (
     <div className="flex items-center gap-2 text-[11px] text-ui-text-muted group">
       <span className="text-ui-text-muted/70 group-hover:text-brand transition-colors">{icon}</span>
@@ -438,11 +448,15 @@ function InfoItem({ icon, text, href }) {
     </div>
   );
 }
-
+type StatCardProps = {
+  label: string;
+  count: number | string;
+  icon: React.ReactNode;
+};
 /**
  * @param {{ label: string, count: string, icon: React.ReactNode }} props
  */
-function StatCard({ label, count, icon }) {
+function StatCard({ label, count, icon }: StatCardProps) {
   return (
     <div className="bg-ui-surface border border-ui-border rounded-smooth p-3 group hover:border-brand/40 transition-all shadow-sm">
       <div className="flex items-center justify-between mb-1">
