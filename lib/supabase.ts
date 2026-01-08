@@ -1,9 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/types/database'
 
-let supabaseInstance: SupabaseClient<Database> | null = null
+let supabaseInstance: SupabaseClient | null = null
 
-export function getSupabase(): SupabaseClient<Database> {
+export function getSupabase(): SupabaseClient {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -12,7 +11,7 @@ export function getSupabase(): SupabaseClient<Database> {
   }
 
   if (!supabaseInstance) {
-    supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey)
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
   }
 
   return supabaseInstance

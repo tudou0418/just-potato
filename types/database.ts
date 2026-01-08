@@ -1,33 +1,24 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export interface GuestbookRow {
+  id: string
+  name: string
+  message: string
+  created_at: string
+}
+
+export interface GuestbookInsert {
+  id?: string
+  name: string
+  message: string
+  created_at?: string
+}
 
 export interface Database {
   public: {
     Tables: {
       guestbook: {
-        Row: {
-          id: string
-          name: string
-          message: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          message: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          message?: string
-          created_at?: string
-        }
+        Row: GuestbookRow
+        Insert: GuestbookInsert
+        Update: Partial<GuestbookInsert>
       }
     }
     Views: {
