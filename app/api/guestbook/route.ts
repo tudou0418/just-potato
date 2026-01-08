@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'
 
 export async function GET() {
   try {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('guestbook')
       .select('*')
@@ -29,6 +30,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase()
     const body = await request.json()
     const { name, message } = body
 
