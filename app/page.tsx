@@ -18,41 +18,6 @@ import {
   Command,MapPin,BookOpen,MessageSquare,Hash,Calendar
 } from 'lucide-react';
 
-/**
- * 💡 亮色模式清晰度优化：
- * 1. 使用 text-ui-text-muted 替代 opacity-60，提升对比度。
- * 2. 给 TechStack 增加了不同的配色方案，避免单调。
- * 3. 增强了 border-ui-border 的可见度。
- */
-
-// --- 增强型数据配置 ---
-const TECH_STACK = [
-  { 
-    name: 'Next.js', 
-    icon: <Globe size={14} />,
-    colorClass: 'bg-ui-text text-ui-surface shadow-md shadow-ui-text/10' 
-  },
-  { 
-    name: 'TypeScript', 
-    icon: <Zap size={14} />,
-    colorClass: 'bg-brand text-ui-surface shadow-md shadow-brand/20' 
-  },
-  { 
-    name: 'Tailwind v4', 
-    icon: <Layout size={14} />,
-    colorClass: 'border-2 border-brand text-brand bg-ui-surface' 
-  },
-  { 
-    name: 'React', 
-    icon: <Sparkles size={14} />,
-    colorClass: 'bg-brand/10 text-brand border border-brand/20' 
-  },
-  { 
-    name: 'Node.js', 
-    icon: <Layers size={14} />,
-    colorClass: 'bg-ui-text-muted/10 text-ui-text-muted border border-ui-text-muted/20' 
-  },
-];
 
 const PROJECTS = [
   {
@@ -471,33 +436,6 @@ function StatCard({ label, count, icon }: StatCardProps) {
     </div>
   );
 }
-//-------------
-const TechStack = () => (
-  <section className="py-16 border-y border-ui-border bg-ui-surface relative">
-    {/* 背景装饰：微弱的斜线纹理增强质感 */}
-    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[repeating-linear-gradient(45deg,var(--color-brand),var(--color-brand)_1px,transparent_1px,transparent_10px)]"></div>
-    
-    <div className="container mx-auto px-6 relative z-10">
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
-        <div className="text-center lg:text-left">
-          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-ui-text-muted mb-2">Technology Stack</h3>
-          <p className="text-ui-text font-bold">我热衷于使用以下技术栈构建应用</p>
-        </div>
-        <div className="flex flex-wrap gap-4 justify-center">
-          {TECH_STACK.map((tech) => (
-            <div 
-              key={tech.name} 
-              className={`px-6 py-3 rounded-2xl text-sm font-black transition-all hover:-translate-y-2 flex items-center gap-2 cursor-default ${tech.colorClass}`}
-            >
-              {tech.icon}
-              {tech.name}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
-);
 
 const Projects = () => (
   <section className="py-24">
@@ -583,7 +521,6 @@ export default function Home() {
   return (
     <div className="bg-ui-surface min-h-screen transition-colors duration-500 pb-20">
       <HeroVariant />
-      <TechStack />
       <Projects />
       <FriendLinks />
 
