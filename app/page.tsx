@@ -1,9 +1,7 @@
-// import React from 'react';
-import React, { useMemo } from 'react';
+'use client';
+
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
-  Github, 
-  Twitter, 
-  Mail, 
   ExternalLink, 
   Layers,
   ChevronRight,
@@ -15,8 +13,11 @@ import {
   Globe,
   MessageCircle,
   Coffee,
-  Command,MapPin,BookOpen,MessageSquare,Hash,Calendar
+  Command,
+  Calendar,
+  Mail
 } from 'lucide-react';
+import { NeuralNetwork } from '@/components/NeuralNetwork';
 
 
 const PROJECTS = [
@@ -46,207 +47,31 @@ const FRIEND_LINKS = [
   { name: "技术交流", url: "#", description: "记录技术感悟，分享生活点滴。", avatar: "T" }
 ];
 
-// --- 页面区块组件 ---
-
-// const HeroVariant = () => {
-//   // 模拟热力图数据：52周 * 7天
-//   const weeks = 28; // 展示最近28周
-//   const days = 7;
-//   const heatmapData = Array.from({ length: weeks * days }, () => Math.floor(Math.random() * 5));
-//   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-
-//   return (
-//     <section className="relative min-h-screen pt-24 pb-16 bg-ui-surface transition-colors duration-500 overflow-hidden">
-//       {/* 背景微弱网格装饰 */}
-//       <div className="absolute inset-0 opacity-[0.3] pointer-events-none bg-[radial-gradient(var(--color-ui-border)_1px,transparent_1px)] [background-size:32px_32px]" />
-
-//       <div className="container mx-auto relative z-10 max-w-7xl">
-//         <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
-          
-//           {/* --- 左侧：个人 Profile (约 1/3 宽度) --- */}
-//           <div className="w-full lg:w-[350px] shrink-0 space-y-8">
-//             {/* 头像区 */}
-//             <div className="relative group">
-//               <div className="w-48 h-48 rounded-[2.5rem] bg-ui-border p-1 shadow-xl transition-transform duration-500 group-hover:scale-[1.02]">
-//                 <div className="w-full h-full rounded-[2.2rem] bg-ui-surface overflow-hidden border-4 border-ui-surface flex items-center justify-center">
-//                   {/* 用户头像占位 */}
-//                   <div className="text-brand font-black text-5xl tracking-tighter">POTATO</div>
-//                 </div>
-//               </div>
-//               {/* 在线状态 */}
-//               <div className="absolute top-4 right-4 bg-emerald-500 w-4 h-4 rounded-full border-4 border-ui-surface shadow-sm animate-pulse" />
-//             </div>
-
-//             {/* 个人介绍 */}
-//             <div className="space-y-4">
-//               <div>
-//                 <h1 className="text-4xl font-black text-ui-text tracking-tight">土豆酱 <span className="text-brand">.</span></h1>
-//               </div>
-              
-//               <p className="text-ui-text-muted leading-relaxed font-medium">
-//                 一个热爱折腾前端技术的数字游民。正在专注于构建极简且高效的 Web 应用，探索代码中的设计美学。
-//               </p>
-
-//               <div className="space-y-2 pt-2 text-sm font-bold text-ui-text-muted">
-//                 <div className="flex items-center gap-2">
-//                   <MapPin size={16} className="text-brand" />
-//                   <span>上海, 中国</span>
-//                 </div>
-//                 <div className="flex items-center gap-2">
-//                   <LinkIcon size={16} className="text-brand" />
-//                   <a href="#" className="hover:text-brand transition-colors">maplezz.com</a>
-//                 </div>
-//               </div>
-//             </div>
-
-//             {/* 社交按钮 */}
-//             <div className="flex items-center gap-3">
-//               {[Github, Twitter, Mail].map((Icon, i) => (
-//                 <a key={i} href="#" className="p-3 rounded-2xl border border-ui-border text-ui-text-muted hover:text-brand hover:bg-brand/5 transition-all">
-//                   <Icon size={20} />
-//                 </a>
-//               ))}
-//             </div>
-
-//             {/* 技能标签 */}
-//             <div className="space-y-3">
-//               <div className="text-[10px] font-black text-ui-text-muted uppercase tracking-[0.3em]">Skill Stack</div>
-//               <div className="flex flex-wrap gap-2">
-//                 {['Next.js', 'React', 'TypeScript', 'Tailwind', 'Node.js', 'Rust'].map(tag => (
-//                   <span key={tag} className="px-3 py-1 bg-ui-border/50 text-ui-text-muted rounded-lg text-xs font-bold border border-ui-border">
-//                     {tag}
-//                   </span>
-//                 ))}
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* --- 右侧：内容矩阵 (约 2/3 宽度) --- */}
-//           <div className="flex-1 w-full space-y-6">
-            
-//             {/* 创作热力图卡片 */}
-//             <div className="bg-ui-surface border border-ui-border rounded-[2.5rem] p-8 shadow-brand transition-all">
-//               <header className="flex items-center justify-between mb-8">
-//                 <div className="flex items-center gap-3 text-ui-text font-black text-xl">
-//                   <Command className="text-brand" size={24} />
-//                   <span>Commit Records</span>
-//                 </div>
-//                 <div className="text-xs font-bold text-ui-text-muted bg-ui-border/30 px-3 py-1 rounded-full">
-//                   Year 2026
-//                 </div>
-//               </header>
-
-//               {/* 热力图网格 */}
-//               <div className="overflow-x-auto pb-4 scrollbar-hide">
-//                 <div className="min-w-[600px] space-y-4">
-//                   {/* 月份头部 */}
-//                   <div className="flex text-[10px] font-bold text-ui-text-muted uppercase tracking-widest pl-6">
-//                     {months.map(m => (
-//                       <div key={m} className="flex-1">{m}</div>
-//                     ))}
-//                   </div>
-                  
-//                   <div className="flex gap-2">
-//                     {/* 周几标识 */}
-//                     <div className="flex flex-col gap-2 text-[8px] font-bold text-ui-text-muted uppercase pt-1">
-//                       <span>Mon</span>
-//                       <span className="opacity-0">Tue</span>
-//                       <span>Wed</span>
-//                       <span className="opacity-0">Thu</span>
-//                       <span>Fri</span>
-//                     </div>
-                    
-//                     {/* 格子阵列 */}
-//                     <div className="flex-1 grid grid-cols-[repeat(28,1fr)] gap-2">
-//                       {heatmapData.map((heat, i) => (
-//                         <div 
-//                           key={i} 
-//                           className={`aspect-square rounded-[4px] border transition-colors duration-500
-//                             ${heat === 0 ? 'bg-ui-border/30 border-transparent' : ''}
-//                             ${heat === 1 ? 'bg-brand/10 border-brand/5' : ''}
-//                             ${heat === 2 ? 'bg-brand/30 border-brand/10' : ''}
-//                             ${heat === 3 ? 'bg-brand/60 border-brand/20' : ''}
-//                             ${heat === 4 ? 'bg-brand border-brand/40 shadow-sm' : ''}
-//                           `}
-//                         />
-//                       ))}
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-
-//               {/* 底部统计 */}
-//               <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-6 border-t border-ui-border pt-6">
-//                 <div className="flex gap-10">
-//                   <div>
-//                     <div className="text-2xl font-black text-ui-text tracking-tighter">1,204</div>
-//                     <div className="text-[10px] font-bold text-ui-text-muted uppercase tracking-widest">Total Contributions</div>
-//                   </div>
-//                   <div>
-//                     <div className="text-2xl font-black text-brand tracking-tighter">84</div>
-//                     <div className="text-[10px] font-bold text-ui-text-muted uppercase tracking-widest">Current Streak</div>
-//                   </div>
-//                 </div>
-//                 <div className="flex items-center gap-2">
-//                   <span className="text-[10px] font-bold text-ui-text-muted uppercase">Less</span>
-//                   <div className="flex gap-1">
-//                     {[0, 1, 2, 3, 4].map(h => (
-//                       <div key={h} className={`w-3 h-3 rounded-sm ${h === 0 ? 'bg-ui-border/30' : h === 1 ? 'bg-brand/20' : h === 2 ? 'bg-brand/40' : h === 3 ? 'bg-brand/70' : 'bg-brand'}`} />
-//                     ))}
-//                   </div>
-//                   <span className="text-[10px] font-bold text-ui-text-muted uppercase">More</span>
-//                 </div>
-//               </div>
-//             </div>
-
-//             {/* 下方状态条 / 最新动态 */}
-//             <div className="flex flex-col md:flex-row gap-4">
-//               <div className="flex-1 bg-ui-surface border border-ui-border rounded-3xl p-6 flex items-center justify-between group hover:border-brand/30 transition-all cursor-pointer shadow-sm">
-//                 <div className="flex items-center gap-4">
-//                   <div className="w-12 h-12 rounded-2xl bg-brand/5 text-brand flex items-center justify-center">
-//                     <Sparkles size={24} />
-//                   </div>
-//                   <div>
-//                     <div className="text-sm font-black text-ui-text">Current Project</div>
-//                     <div className="text-xs text-ui-text-muted font-medium">正在开发基于 Next.js 15 的博客主题系统...</div>
-//                   </div>
-//                 </div>
-//                 <ChevronRight className="text-ui-text-muted group-hover:text-brand group-hover:translate-x-1 transition-all" size={20} />
-//               </div>
-//             </div>
-
-//           </div>
-//         </div>
-//       </div>
-//     </section>
-//   );
-// }
 /**
  * HeroVariant 组件 - 适配 Tailwind CSS v4 与 Nordic Slate 主题
- * 已解决 TypeScript 隐式 any 类型问题，并优化了组件高度以适配页面比例
- */
-/**
- * HeroVariant 组件 - 适配 Tailwind CSS v4 与 Nordic Slate 主题
- * 包含：365天完整更新日历、交互式 Tooltip、数据统计卡片
+ * 包含：Neural Network 效果、个人名片、365天更新日历
  */
 const HeroVariant = () => {
-  // 生成过去 371 天（53周）的真实日期和模拟数据
-  const calendarData = useMemo(() => {
+  const [calendarData, setCalendarData] = useState<Array<{ date: string; count: number }>>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
     const data = [];
     const today = new Date();
-    // 生成 53 周的数据以填满网格 (53 * 7 = 371)
+    const weights = [0, 0, 0, 0, 1, 1, 2, 3, 4];
+    
     for (let i = 370; i >= 0; i--) {
       const date = new Date();
       date.setDate(today.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      // 权重分布：0(无), 1-2(低), 3-4(高)
-      const weights = [0, 0, 0, 0, 1, 1, 2, 3, 4];
       data.push({
         date: dateStr,
         count: weights[Math.floor(Math.random() * weights.length)],
       });
     }
-    return data;
+    
+    setCalendarData(data);
+    setIsMounted(true);
   }, []);
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -257,183 +82,90 @@ const HeroVariant = () => {
     if (count === 1) return 'bg-brand/20';
     if (count === 2) return 'bg-brand/45';
     if (count === 3) return 'bg-brand/70';
-    return 'bg-brand'; // count >= 4
+    return 'bg-brand';
   };
 
-  return (
-    // 限制大屏高度占比约 40%-45% 视口高度
-    <section className="mx-auto px-30 py-6 lg:h-[45vh] flex flex-col justify-center font-sans">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
-        
-        {/* 左侧：个人名片 */}
-        <div className="lg:col-span-4 h-full">
-          <div className="bg-ui-surface border border-ui-border rounded-smooth p-5 shadow-brand h-full flex flex-col justify-between transition-all hover:shadow-lg">
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-brand to-brand-dark rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Maple" 
-                  alt="Avatar"
-                  className="relative w-16 h-16 rounded-full border-2 border-ui-surface bg-ui-surface object-cover"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-ui-text tracking-tight">土豆</h1>
-                <p className="text-ui-text-muted text-[10px] mt-1 leading-relaxed line-clamp-1">
-                  纯牛马
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-3 my-3">
-              <SocialIcon icon={<Github size={14} />} href="#" label="Github" />
-              <SocialIcon icon={<Twitter size={14} />} href="#" label="Twitter" />
-              <SocialIcon icon={<Mail size={14} />} href="#" label="Email" />
-            </div>
-
-            <div className="border-t border-ui-border/60 mb-3"></div>
-
-            <div className="space-y-1.5 px-1">
-              <InfoItem icon={<MapPin size={12} />} text="ChongQin, China" />
-              <InfoItem icon={<LinkIcon size={12} />} text="just-potato.netlify.app" href="https://just-potato.netlify.app/" />
-            </div>
-
-            <div className="flex flex-wrap gap-1 mt-3">
-              {['Next.js', 'React', 'Rust', 'TS'].map(tag => (
-                <span key={tag} className="px-2 py-0.5 bg-ui-border/30 text-ui-text-muted text-[9px] font-medium rounded-md">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 右侧：统计与日历 */}
-        <div className="lg:col-span-8 flex flex-col gap-4 h-full overflow-hidden">
-          
-          {/* 顶部统计卡片 */}
-          <div className="grid grid-cols-3 gap-3">
-            <StatCard icon={<BookOpen size={16} />} label="Articles" count="156" />
-            <StatCard icon={<MessageSquare size={16} />} label="Comments" count="892" />
-            <StatCard icon={<Hash size={16} />} label="Tags" count="34" />
-          </div>
-
-          {/* 更新日历卡片 */}
-          <div className="bg-ui-surface border border-ui-border rounded-smooth p-5 shadow-brand flex-1 flex flex-col justify-between overflow-hidden">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-ui-text flex items-center gap-2">
-                <Calendar size={16} className="text-brand" />
-                过去365天我干啥了？
-              </h3>
-              <div className="hidden sm:flex items-center gap-2 text-[9px] text-ui-text-muted bg-ui-border/20 px-2 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
-                Active for 365 days
-              </div>
-            </div>
-
-            {/* 日历展示区 */}
-            <div className="relative flex-1 flex flex-col justify-center min-h-0">
-              {/* 月份标注 - 简单平均分布 */}
-              <div className="flex text-[8px] text-ui-text-muted mb-1 ml-1 justify-between pr-4">
-                {months.map(m => <span key={m}>{m}</span>)}
-              </div>
-
-              {/* 滚动容器 */}
-              <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-ui-border scrollbar-track-transparent">
-                <div className="inline-grid grid-flow-col grid-rows-7 gap-1 min-w-max pr-2">
-                  {calendarData.map((item, i) => (
-                    <div
-                      key={i}
-                      className={`w-2.5 h-2.5 rounded-[1px] transition-all hover:ring-1 hover:ring-brand hover:scale-110 cursor-help ${getLevelColor(item.count)}`}
-                      title={`${item.date}: ${item.count === 0 ? 'No' : item.count} articles updated`}
-                    />
-                  ))}
+  if (!isMounted) {
+    return (
+      <section className="flex flex-col">
+        <NeuralNetwork />
+        <div className="mx-auto px-6 lg:px-30 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-12">
+              <div className="bg-ui-surface border border-ui-border rounded-smooth p-5 shadow-brand">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-ui-border/30 rounded mb-4"></div>
+                  <div className="h-32 bg-ui-border/20 rounded"></div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-ui-border/40">
-              <span className="text-[10px] text-ui-text-muted italic">
-                {calendarData.reduce((acc, curr) => acc + curr.count, 0)} updates in the past year
-              </span>
-              <div className="flex items-center gap-1 text-[8px] text-ui-text-muted uppercase font-medium">
-                <span>Less</span>
-                {[0, 1, 2, 3, 4].map(l => (
-                  <div key={l} className={`w-2.5 h-2.5 rounded-[1px] ${getLevelColor(l)}`}></div>
-                ))}
-                <span>More</span>
+  return (
+    <section className="flex flex-col">
+      {/* 顶部：Neural Network 效果（包含个人名片） */}
+      <NeuralNetwork />
+
+      {/* 下方：日历卡片单独一排 */}
+      <div className="mx-auto px-6 lg:px-30 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          
+          {/* 日历卡片 */}
+          <div className="lg:col-span-12">
+            <div className="bg-ui-surface border border-ui-border rounded-smooth p-5 shadow-brand transition-all hover:shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-ui-text flex items-center gap-2">
+                  <Calendar size={16} className="text-brand" />
+                  过去365天我干啥了？
+                </h3>
+                <div className="hidden sm:flex items-center gap-2 text-[9px] text-ui-text-muted bg-ui-border/20 px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+                  Active for 365 days
+                </div>
+              </div>
+
+              {/* 日历展示区 */}
+              <div className="relative flex-1 flex flex-col justify-center min-h-0">
+                {/* 月份标注 - 简单平均分布 */}
+                <div className="flex text-[8px] text-ui-text-muted mb-1 ml-1 justify-between pr-4">
+                  {months.map(m => <span key={m}>{m}</span>)}
+                </div>
+
+                {/* 滚动容器 */}
+                <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-ui-border scrollbar-track-transparent">
+                  <div className="inline-grid grid-flow-col grid-rows-7 gap-1 min-w-max pr-2">
+                    {calendarData.map((item, i) => (
+                      <div
+                        key={i}
+                        className={`w-2.5 h-2.5 rounded-[1px] transition-all hover:ring-1 hover:ring-brand hover:scale-110 cursor-help ${getLevelColor(item.count)}`}
+                        title={`${item.date}: ${item.count === 0 ? 'No' : item.count} articles updated`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-4 pt-2 border-t border-ui-border/40">
+                <span className="text-[10px] text-ui-text-muted italic">
+                  {calendarData.reduce((acc, curr) => acc + curr.count, 0)} updates in the past year
+                </span>
+                <div className="flex items-center gap-1 text-[8px] text-ui-text-muted uppercase font-medium">
+                  <span>Less</span>
+                  {[0, 1, 2, 3, 4].map(l => (
+                    <div key={l} className={`w-2.5 h-2.5 rounded-[1px] ${getLevelColor(l)}`}></div>
+                  ))}
+                  <span>More</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-/**
- * @param {{ icon: React.ReactNode, href: string, label: string }} props
- */
-type SocialIconProps = {
-  icon: React.ReactNode;
-  href: string;
-  label: string;
-};
-function SocialIcon({ icon, href, label }: SocialIconProps) {
-  return (
-    <a 
-      href={href} 
-      aria-label={label}
-      className="p-1.5 bg-ui-border/20 text-ui-text-muted hover:text-white hover:bg-brand rounded-md transition-all"
-    >
-      {icon}
-    </a>
-  );
-}
-
-type InfoItemProps = {
-  icon: React.ReactNode;
-  text: string;
-  href?: string;
-};
-/**
- * @param {{ icon: React.ReactNode, text: string, href?: string }} props
- */
-function InfoItem({ icon, text, href }: InfoItemProps) {
-  return (
-    <div className="flex items-center gap-2 text-[11px] text-ui-text-muted group">
-      <span className="text-ui-text-muted/70 group-hover:text-brand transition-colors">{icon}</span>
-      {href ? (
-        <a href={href} target="_blank" rel="noreferrer" className="hover:text-brand transition-colors truncate">
-          {text}
-        </a>
-      ) : (
-        <span className="truncate">{text}</span>
-      )}
-    </div>
-  );
-}
-type StatCardProps = {
-  label: string;
-  count: number | string;
-  icon: React.ReactNode;
-};
-/**
- * @param {{ label: string, count: string, icon: React.ReactNode }} props
- */
-function StatCard({ label, count, icon }: StatCardProps) {
-  return (
-    <div className="bg-ui-surface border border-ui-border rounded-smooth p-3 group hover:border-brand/40 transition-all shadow-sm">
-      <div className="flex items-center justify-between mb-1">
-        <div className="p-1 bg-brand/5 text-brand rounded-md group-hover:bg-brand group-hover:text-white transition-all">
-          {icon}
-        </div>
-        <span className="text-base font-black text-ui-text">{count}</span>
-      </div>
-      <div className="text-[8px] font-bold text-ui-text-muted uppercase tracking-wider">
-        {label}
-      </div>
-    </div>
   );
 }
 
