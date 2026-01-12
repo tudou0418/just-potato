@@ -184,7 +184,7 @@ interface MousePos {
 const NeuralNetwork = () => {
   const globeRef = useRef<HTMLDivElement>(null)
   const [isDark, setIsDark] = useState(true)
-  const requestRef = useRef<number>()
+  const requestRef = useRef<number | undefined>(undefined)
   const mouseRef = useRef<MousePos>({ x: 0, y: 0 })
 
   // 1. 主题监听
@@ -225,7 +225,8 @@ const NeuralNetwork = () => {
       const ringsData = arcsData.slice(0, 8).map(d => ({ lat: d.startLat, lng: d.startLng }))
 
       // 创建实例
-      globeInstance = Globe()(container)
+      const GlobeConstructor = Globe as any
+      globeInstance = new GlobeConstructor(container)
         .width(container.offsetWidth)
         .height(container.offsetHeight)
         .backgroundColor('rgba(0,0,0,0)') // 使用透明背景以适配 CSS 变量
