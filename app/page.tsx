@@ -15,9 +15,10 @@ import {
   Coffee,
   Command,
   Calendar,
-  Mail
+  Mail,
+  MapPin
 } from 'lucide-react';
-import { NeuralNetwork } from '@/components/NeuralNetwork';
+import { ZdogBackground } from '@/components/ZdogBackground';
 
 
 const PROJECTS = [
@@ -28,30 +29,84 @@ const PROJECTS = [
     link: '#'
   },
   {
-    title: 'AI 辅助工具',
-    description: '集成大语言模型的生产力工具，通过语义化变量实现极致的视觉一致性。',
-    tags: ['OpenAI', 'Config'],
+    title: '开源组件库',
+    description: '一套轻量级、高性能的 React 组件库，专为开发者打造，开箱即用。',
+    tags: ['React', 'TypeScript'],
     link: '#'
   },
   {
-    title: 'UI 设计系统',
-    description: '一套基于 CSS 变量驱动的精美组件库，专注于可访问性和高对比度设计。',
-    tags: ['Design', 'UX'],
+    title: 'AI 辅助工具',
+    description: '基于 LLM 的智能代码助手，提升开发效率，减少重复劳动。',
+    tags: ['AI', 'Productivity'],
     link: '#'
-  }
+  },
 ];
 
-const FRIEND_LINKS = [
-  { name: "愧怍", url: "https://kuizuo.cn", description: "人生漫漫，只想留下一路足迹。", avatar: "K" },
-  { name: "示例友链", url: "#", description: "优秀的博客示例，欢迎互换友链。", avatar: "E" },
-  { name: "技术交流", url: "#", description: "记录技术感悟，分享生活点滴。", avatar: "T" }
+const FRIENDS = [
+  { name: 'Next.js', url: 'https://nextjs.org', description: 'React 框架' },
+  { name: 'Tailwind CSS', url: 'https://tailwindcss.com', description: '原子化 CSS' },
+  { name: 'Vercel', url: 'https://vercel.com', description: '部署平台' },
+  { name: 'Supabase', url: 'https://supabase.com', description: '后端服务' },
+  { name: 'TypeScript', url: 'https://typescriptlang.org', description: '类型安全' },
+  { name: 'Radix UI', url: 'https://radix-ui.com', description: '无头组件' },
 ];
 
 /**
  * HeroVariant 组件 - 适配 Tailwind CSS v4 与 Nordic Slate 主题
- * 包含：Neural Network 效果、个人名片、365天更新日历
+ * 包含：Zdog 3D 角色效果
  */
 const HeroVariant = () => {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
+    checkTheme();
+    const obs = new MutationObserver(checkTheme);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <section className="relative w-full h-[45vh] flex items-center justify-center overflow-hidden">
+      {/* Zdog 3D 角色背景 */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <ZdogBackground isDark={isDark} />
+      </div>
+      {/* 蒙版 */}
+      <div className="absolute inset-0 pointer-events-none bg-radial-vignette opacity-95" />
+      {/* UI 引导层 */}
+      <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-12 lg:p-24">
+        <div className="flex justify-center">
+        </div>
+
+        <div className="flex flex-col md:flex-row items-end justify-between gap-12 animate-reveal">
+          <div className="flex flex-col gap-2 pointer-events-auto text-left opacity-60 hover:opacity-100 transition-opacity">
+               <span className="text-[10px] font-black uppercase tracking-widest text-ui-text-muted mb-2">Connect</span>
+               <div className="flex gap-5">
+                 <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Git</a>
+                 <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Twi</a>
+                 <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Mail</a>
+               </div>
+            </div>
+
+            <div className="flex flex-col items-end pointer-events-auto text-right bg-ui-surface/20 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/5 shadow-2xl max-w-xs transition-all hover:-translate-y-2 duration-700 group">
+              <div className="flex items-center gap-4 text-ui-text font-black text-2xl mb-2 tracking-tighter uppercase group-hover:text-brand transition-colors">
+                <MapPin size={22} className="text-brand" />
+                CQ · CHN
+              </div>
+              <div className="h-1 w-24 bg-brand rounded-full mb-4"></div>
+              <p className="text-[9px] text-ui-text-muted font-black leading-relaxed opacity-60 uppercase tracking-[0.2em]">
+                记录想法，也记录成长<br/>
+                保持克制，持续输出
+              </p>
+            </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const CalendarSection = () => {
   const [calendarData, setCalendarData] = useState<Array<{ date: string; count: number }>>([]);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -76,7 +131,6 @@ const HeroVariant = () => {
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  // 根据 count 获取颜色等级
   const getLevelColor = (count: number | undefined) => {
     if (count === 0) return 'bg-ui-border/30';
     if (count === 1) return 'bg-brand/20';
@@ -86,88 +140,66 @@ const HeroVariant = () => {
   };
 
   if (!isMounted) {
-    return (
-      <section className="flex flex-col">
-        <NeuralNetwork />
-        <div className="mx-auto px-6 lg:px-30 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-12">
-              <div className="bg-ui-surface border border-ui-border rounded-smooth p-5 shadow-brand">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-ui-border/30 rounded mb-4"></div>
-                  <div className="h-32 bg-ui-border/20 rounded"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
+    return null;
   }
 
   return (
-    <section className="flex flex-col">
-      {/* 顶部：Neural Network 效果（包含个人名片） */}
-      <NeuralNetwork />
+    <div className="mx-auto px-6 lg:px-30 py-6 relative z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        {/* 日历卡片 */}
+        <div className="lg:col-span-12">
+          <div className="bg-ui-surface border border-ui-border rounded-smooth p-5 shadow-brand transition-all hover:shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-ui-text flex items-center gap-2">
+                <Calendar size={16} className="text-brand" />
+                过去365天我干啥了？
+              </h3>
+              <div className="hidden sm:flex items-center gap-2 text-[9px] text-ui-text-muted bg-ui-border/20 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+                Active for 365 days
+              </div>
+            </div>
 
-      {/* 下方：日历卡片单独一排 */}
-      <div className="mx-auto px-6 lg:px-30 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          
-          {/* 日历卡片 */}
-          <div className="lg:col-span-12">
-            <div className="bg-ui-surface border border-ui-border rounded-smooth p-5 shadow-brand transition-all hover:shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-ui-text flex items-center gap-2">
-                  <Calendar size={16} className="text-brand" />
-                  过去365天我干啥了？
-                </h3>
-                <div className="hidden sm:flex items-center gap-2 text-[9px] text-ui-text-muted bg-ui-border/20 px-2 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
-                  Active for 365 days
-                </div>
+            {/* 日历展示区 */}
+            <div className="relative flex-1 flex flex-col justify-center min-h-0">
+              {/* 月份标注 - 简单平均分布 */}
+              <div className="flex text-[8px] text-ui-text-muted mb-1 ml-1 justify-between pr-4">
+                {months.map(m => <span key={m}>{m}</span>)}
               </div>
 
-              {/* 日历展示区 */}
-              <div className="relative flex-1 flex flex-col justify-center min-h-0">
-                {/* 月份标注 - 简单平均分布 */}
-                <div className="flex text-[8px] text-ui-text-muted mb-1 ml-1 justify-between pr-4">
-                  {months.map(m => <span key={m}>{m}</span>)}
-                </div>
-
-                {/* 滚动容器 */}
-                <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-ui-border scrollbar-track-transparent">
-                  <div className="inline-grid grid-flow-col grid-rows-7 gap-1 min-w-max pr-2">
-                    {calendarData.map((item, i) => (
-                      <div
-                        key={i}
-                        className={`w-2.5 h-2.5 rounded-[1px] transition-all hover:ring-1 hover:ring-brand hover:scale-110 cursor-help ${getLevelColor(item.count)}`}
-                        title={`${item.date}: ${item.count === 0 ? 'No' : item.count} articles updated`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-4 pt-2 border-t border-ui-border/40">
-                <span className="text-[10px] text-ui-text-muted italic">
-                  {calendarData.reduce((acc, curr) => acc + curr.count, 0)} updates in the past year
-                </span>
-                <div className="flex items-center gap-1 text-[8px] text-ui-text-muted uppercase font-medium">
-                  <span>Less</span>
-                  {[0, 1, 2, 3, 4].map(l => (
-                    <div key={l} className={`w-2.5 h-2.5 rounded-[1px] ${getLevelColor(l)}`}></div>
+              {/* 滚动容器 */}
+              <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-ui-border scrollbar-track-transparent">
+                <div className="inline-grid grid-flow-col grid-rows-7 gap-1 min-w-max pr-2">
+                  {calendarData.map((item, i) => (
+                    <div
+                      key={i}
+                      className={`w-2.5 h-2.5 rounded-[1px] transition-all hover:ring-1 hover:ring-brand hover:scale-110 cursor-help ${getLevelColor(item.count)}`}
+                      title={`${item.date}: ${item.count === 0 ? 'No' : item.count} articles updated`}
+                    />
                   ))}
-                  <span>More</span>
                 </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mt-4 pt-2 border-t border-ui-border/40">
+              <span className="text-[10px] text-ui-text-muted italic">
+                {calendarData.reduce((acc, curr) => acc + curr.count, 0)} updates in the past year
+              </span>
+              <div className="flex items-center gap-1 text-[8px] text-ui-text-muted uppercase font-medium">
+                <span>Less</span>
+                {[0, 1, 2, 3, 4].map(l => (
+                  <div key={l} className={`w-2.5 h-2.5 rounded-[1px] ${getLevelColor(l)}`}></div>
+                ))}
+                <span>More</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
-}
+};
 
 const Projects = () => (
   <section className="py-24">
@@ -210,38 +242,26 @@ const FriendLinks = () => (
   <section className="py-24">
     <div className="container mx-auto px-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-        <div>
-          <h2 className="flex items-center gap-3 text-3xl font-black text-ui-text mb-4 tracking-tight">
-            <Users className="text-brand" size={32} /> 友情链接
-          </h2>
-          <p className="text-ui-text-muted font-medium text-lg">
-            与优秀的人并肩而行，记录值得被发现的角落。
-          </p>
+        <div className="space-y-2">
+          <h2 className="text-4xl font-black text-ui-text tracking-tight">友情链接</h2>
+          <p className="text-ui-text-muted font-medium text-lg">与优秀的人同行。</p>
         </div>
+        <a href="#" className="group flex items-center gap-2 font-bold text-brand hover:underline underline-offset-4 decoration-2 transition-all">
+          申请友链 <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+        </a>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {FRIEND_LINKS.map((friend, idx) => (
-          <a 
-            key={idx} 
-            href={friend.url} 
-            target="_blank" 
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {FRIENDS.map((friend, idx) => (
+          <a
+            key={idx}
+            href={friend.url}
+            target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-4 p-6 rounded-smooth border-2 border-ui-border bg-ui-surface hover:bg-brand/5 hover:border-brand/40 transition-all duration-300 shadow-sm"
+            className="group flex flex-col items-center justify-center p-6 rounded-smooth border-2 border-ui-border bg-ui-surface hover:border-brand hover:shadow-brand transition-all duration-300"
           >
-            <div className="w-14 h-14 shrink-0 rounded-full bg-brand text-ui-surface flex items-center justify-center text-xl font-black group-hover:rotate-12 transition-transform shadow-brand-sm">
-              {friend.avatar}
-            </div>
-            <div className="overflow-hidden">
-              <h3 className="font-bold text-ui-text group-hover:text-brand transition-colors truncate">
-                {friend.name}
-              </h3>
-              <p className="text-sm text-ui-text-muted truncate font-medium">
-                {friend.description}
-              </p>
-            </div>
-            <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-              <LinkIcon size={16} className="text-brand" />
-            </div>
+            <Users size={32} className="text-ui-text-muted group-hover:text-brand mb-3 transition-colors" />
+            <span className="font-bold text-ui-text group-hover:text-brand transition-colors text-sm">{friend.name}</span>
+            <span className="text-xs text-ui-text-muted mt-1">{friend.description}</span>
           </a>
         ))}
       </div>
@@ -253,6 +273,7 @@ export default function Home() {
   return (
     <div className="bg-ui-surface min-h-screen transition-colors duration-500 pb-20">
       <HeroVariant />
+      <CalendarSection />
       <Projects />
       <FriendLinks />
 
@@ -298,6 +319,22 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(60px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-reveal {
+          animation: fadeInUp 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .bg-radial-vignette {
+          background: radial-gradient(circle at center, transparent 0%, var(--ui-surface) 100%);
+        }
+        canvas {
+          touch-action: none;
+        }
+      `}</style>
 
       <footer className="py-8 text-center text-ui-text-muted font-bold text-xs tracking-widest uppercase">
         <p>© 2026 KV Studio. Designed for clarity & warmth.</p>
