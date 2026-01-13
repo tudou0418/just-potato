@@ -66,7 +66,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, Code2, Github } from 'lucide-react';
+import { Sun, Moon, Code2, Github, Menu, X } from 'lucide-react';
 
 /**
  * 💡 琥珀主题适配说明：
@@ -79,6 +79,7 @@ import { Sun, Moon, Code2, Github } from 'lucide-react';
 const Header = () => {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 避免 Hydration Mismatch
   useEffect(() => {
@@ -99,7 +100,7 @@ const Header = () => {
           </div>
         </div>
         
-        {/* 导航菜单 */}
+        {/* 桌面端导航菜单 */}
         <div className="hidden space-x-8 md:flex text-sm font-medium text-ui-text opacity-70">
           <a href="/" className="hover:text-brand hover:opacity-100 transition-colors">首页</a>
           <a href="/projects" className="hover:text-brand hover:opacity-100 transition-colors">项目</a>
@@ -113,7 +114,7 @@ const Header = () => {
             href="https://github.com" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="p-2 text-ui-text opacity-60 hover:text-brand hover:opacity-100 transition-colors"
+            className="hidden sm:flex p-2 text-ui-text opacity-60 hover:text-brand hover:opacity-100 transition-colors"
           >
             <Github size={20} />
           </a>
@@ -131,8 +132,66 @@ const Header = () => {
           <button className="hidden sm:block rounded-full bg-brand px-6 py-2 text-sm font-bold text-white hover:bg-brand-dark transition-all shadow-brand">
             订阅
           </button>
+
+          {/* 移动端菜单按钮 */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-ui-text hover:text-brand transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
+
+      {/* 移动端菜单 */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-ui-border bg-ui-surface/95 backdrop-blur-md">
+          <div className="container mx-auto px-6 py-4 space-y-3">
+            <a 
+              href="/" 
+              className="block py-2 text-sm font-medium text-ui-text hover:text-brand transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              首页
+            </a>
+            <a 
+              href="/projects" 
+              className="block py-2 text-sm font-medium text-ui-text hover:text-brand transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              项目
+            </a>
+            <a 
+              href="/posts" 
+              className="block py-2 text-sm font-medium text-ui-text hover:text-brand transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              文章
+            </a>
+            <a 
+              href="/about" 
+              className="block py-2 text-sm font-medium text-ui-text hover:text-brand transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              关于
+            </a>
+            <div className="pt-3 border-t border-ui-border/50 flex items-center gap-3">
+              <a 
+                href="https://github.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 text-ui-text opacity-60 hover:text-brand hover:opacity-100 transition-colors"
+              >
+                <Github size={20} />
+              </a>
+              <button className="rounded-full bg-brand px-6 py-2 text-sm font-bold text-white hover:bg-brand-dark transition-all shadow-brand">
+                订阅
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

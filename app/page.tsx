@@ -55,6 +55,56 @@ const FRIENDS = [
  * HeroVariant 组件 - 适配 Tailwind CSS v4 与 Nordic Slate 主题
  * 包含：Zdog 3D 角色效果
  */
+// const HeroVariant = () => {
+//   const [isDark, setIsDark] = useState(false);
+
+//   useEffect(() => {
+//     const checkTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
+//     checkTheme();
+//     const obs = new MutationObserver(checkTheme);
+//     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+//     return () => obs.disconnect();
+//   }, []);
+
+//   return (
+//     <section className="relative w-full h-[45vh] flex items-center justify-center overflow-hidden">
+//       {/* Zdog 3D 角色背景 */}
+//       <div className="absolute inset-0 flex items-center justify-center">
+//         <ZdogBackground isDark={isDark} />
+//       </div>
+//       {/* 蒙版 */}
+//       <div className="absolute inset-0 pointer-events-none bg-radial-vignette opacity-95" />
+//       {/* UI 引导层 */}
+//       <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-12 lg:p-24">
+//         <div className="flex justify-center">
+//         </div>
+
+//         <div className="flex flex-col md:flex-row items-end justify-between gap-12 animate-reveal">
+//           <div className="flex flex-col gap-2 pointer-events-auto text-left opacity-60 hover:opacity-100 transition-opacity">
+//                <span className="text-[10px] font-black uppercase tracking-widest text-ui-text-muted mb-2">Connect</span>
+//                <div className="flex gap-5">
+//                  <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Git</a>
+//                  <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Twi</a>
+//                  <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Mail</a>
+//                </div>
+//             </div>
+
+//             <div className="flex flex-col items-end pointer-events-auto text-right bg-ui-surface/20 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/5 shadow-2xl max-w-xs transition-all hover:-translate-y-2 duration-700 group">
+//               <div className="flex items-center gap-4 text-ui-text font-black text-2xl mb-2 tracking-tighter uppercase group-hover:text-brand transition-colors">
+//                 <MapPin size={22} className="text-brand" />
+//                 CQ · CHN
+//               </div>
+//               <div className="h-1 w-24 bg-brand rounded-full mb-4"></div>
+//               <p className="text-[9px] text-ui-text-muted font-black leading-relaxed opacity-60 uppercase tracking-[0.2em]">
+//                 记录想法，也记录成长<br/>
+//                 保持克制，持续输出
+//               </p>
+//             </div>
+//         </div>
+//       </div>
+//     </section>
+//   );
+// };
 const HeroVariant = () => {
   const [isDark, setIsDark] = useState(false);
 
@@ -67,45 +117,95 @@ const HeroVariant = () => {
   }, []);
 
   return (
-    <section className="relative w-full h-[45vh] flex items-center justify-center overflow-hidden">
-      {/* Zdog 3D 角色背景 */}
+    <section className="relative w-full h-[60vh] md:h-[55vh] flex items-center justify-center overflow-hidden">
+      {/* 1. 背景大型装饰文字 (让空间不再空旷) */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+        <span className="text-[20vw] font-black text-ui-text/[0.03] uppercase tracking-tighter leading-none italic">
+          Potato
+        </span>
+      </div>
+
+      {/* 2. Zdog 3D 角色背景 */}
       <div className="absolute inset-0 flex items-center justify-center">
         <ZdogBackground isDark={isDark} />
       </div>
-      {/* 蒙版 */}
-      <div className="absolute inset-0 pointer-events-none bg-radial-vignette opacity-95" />
-      {/* UI 引导层 */}
-      <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-12 lg:p-24">
-        <div className="flex justify-center">
+      
+      {/* 3. 渐变蒙版 */}
+      <div className="absolute inset-0 pointer-events-none bg-radial-vignette opacity-90" />
+
+      {/* 4. UI 交互/引导层 (HUD 风格布局) */}
+      <div className="absolute inset-0 z-10 pointer-events-none p-6 md:p-12 flex flex-col justify-between">
+        
+        {/* --- Top Row: 品牌与状态 --- */}
+        <div className="flex justify-between items-start animate-reveal" style={{ animationDelay: '0.2s' }}>
+          <div className="flex flex-col gap-1 pointer-events-auto">
+             <div className="flex items-center gap-2 text-brand font-black italic tracking-tighter text-xl">
+               <Zap size={20} fill="currentColor" />
+               Just Potato
+             </div>
+             <div className="text-[10px] text-ui-text-muted font-bold tracking-[0.3em] uppercase opacity-50">
+               换脑洞 · 不换行
+             </div>
+          </div>
+
+          <div className="hidden md:flex flex-col items-end gap-1 text-[10px] font-bold text-ui-text-muted opacity-60">
+            <span>VER: 2026.1.13</span>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+              STATUS: EXPLORING 3D SPACE
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-end justify-between gap-12 animate-reveal">
-          <div className="flex flex-col gap-2 pointer-events-auto text-left opacity-60 hover:opacity-100 transition-opacity">
-               <span className="text-[10px] font-black uppercase tracking-widest text-ui-text-muted mb-2">Connect</span>
-               <div className="flex gap-5">
-                 <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Git</a>
-                 <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Twi</a>
-                 <a href="#" className="text-ui-text-muted hover:text-brand transition-all font-black uppercase text-xs tracking-widest">Mail</a>
+        {/* --- Middle: 如果你觉得中心还是空，可以在这里加个微型指示器 --- */}
+
+        {/* --- Bottom Row: 连接与卡片 --- */}
+        <div className="flex flex-col md:flex-row items-end justify-between gap-12 animate-reveal" style={{ animationDelay: '0.5s' }}>
+          
+          {/* 左下：连接社交媒体 */}
+          <div className="flex flex-col gap-4 pointer-events-auto text-left group">
+            <div className="flex flex-col gap-1">
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand mb-1">保持 联系</span>
+               <div className="flex gap-6">
+                 {['GitHub', '掘金', '邮箱'].map((platform) => (
+                   <a key={platform} href="#" className="text-ui-text hover:text-brand transition-all font-black uppercase text-xs tracking-widest relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-brand hover:after:w-full after:transition-all">
+                     {platform}
+                   </a>
+                 ))}
                </div>
             </div>
+            <div className="w-32 h-px bg-ui-border/50 group-hover:w-48 transition-all duration-700"></div>
+          </div>
 
-            <div className="flex flex-col items-end pointer-events-auto text-right bg-ui-surface/20 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/5 shadow-2xl max-w-xs transition-all hover:-translate-y-2 duration-700 group">
-              <div className="flex items-center gap-4 text-ui-text font-black text-2xl mb-2 tracking-tighter uppercase group-hover:text-brand transition-colors">
-                <MapPin size={22} className="text-brand" />
-                CQ · CHN
-              </div>
-              <div className="h-1 w-24 bg-brand rounded-full mb-4"></div>
-              <p className="text-[9px] text-ui-text-muted font-black leading-relaxed opacity-60 uppercase tracking-[0.2em]">
-                记录想法，也记录成长<br/>
-                保持克制，持续输出
-              </p>
+          {/* 右下：身份卡片 */}
+          <div className="flex flex-col items-end pointer-events-auto text-right bg-ui-surface/40 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] border border-ui-border shadow-2xl max-w-[280px] transition-all hover:-translate-y-2 duration-700 group">
+            <div className="flex items-center gap-3 text-ui-text font-black text-2xl mb-1 tracking-tighter uppercase group-hover:text-brand transition-colors">
+              <MapPin size={22} className="text-brand" />
+              CQ · CHN
             </div>
+            
+            <div className="text-[11px] text-ui-text font-bold mb-4 flex items-center gap-2 opacity-80">
+               <span className="w-8 h-[2px] bg-brand/30"></span>
+               POTATO DESIGNER
+            </div>
+            
+            <p className="text-[12px] text-ui-text-muted font-medium leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">
+              "记录想法，也记录成长。<br/>
+              保持克制，持续输出。"
+            </p>
+            
+            <div className="mt-4 flex gap-1 self-start">
+               <div className="w-1 h-1 bg-brand rounded-full"></div>
+               <div className="w-1 h-1 bg-brand/40 rounded-full"></div>
+               <div className="w-1 h-1 bg-brand/10 rounded-full"></div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
   );
 };
-
 const CalendarSection = () => {
   const [calendarData, setCalendarData] = useState<Array<{ date: string; count: number }>>([]);
   const [isMounted, setIsMounted] = useState(false);
