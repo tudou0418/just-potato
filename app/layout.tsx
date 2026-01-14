@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-// 提示：如果在本地运行遇到 next/font/google 错误，请确保 next 版本为最新。
-// 在预览环境中，我们暂时移除特定字体导入以确保编译通过，本地可以根据需要保留。
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ThemeProvider from '../components/ThemeProvider';
+import Character3D from '../components/Character3D';
 import "./globals.css";
 // 导入styles里面的globals.css以应用全局样式
 export const metadata: Metadata = {
@@ -29,6 +28,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <Character3D />
           </div>
         </ThemeProvider>
       </body>
