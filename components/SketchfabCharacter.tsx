@@ -24,7 +24,7 @@ const SketchfabCharacter = () => {
 
   useEffect(() => {
     const scriptId = 'sketchfab-sdk';
-    let script = document.getElementById(scriptId);
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
 
     const initViewer = () => {
       if (!(window as any).Sketchfab || !iframeRef.current) {
@@ -76,7 +76,7 @@ const SketchfabCharacter = () => {
         double_click: 0,
         cursor: 0,
         autostart: 1,
-        ...(apiKey && { api_key: apiKey })
+        ...(apiKey ? { api_key: apiKey } : {})
       });
     };
 
