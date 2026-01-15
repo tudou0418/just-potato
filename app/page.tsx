@@ -134,29 +134,8 @@ const HeroVariant = () => {
       <div className="absolute inset-0 pointer-events-none bg-radial-vignette opacity-90" />
 
       {/* 4. UI 交互/引导层 (HUD 风格布局) */}
-      <div className="absolute inset-0 z-10 pointer-events-none p-6 md:p-12 flex flex-col justify-between">
+      <div className="absolute inset-0 z-10 pointer-events-none p-6 md:p-12 pt-20 md:pt-12 flex flex-col justify-between">
         
-        {/* --- Top Row: 品牌与状态 --- */}
-        <div className="flex justify-between items-start animate-reveal" style={{ animationDelay: '0.2s' }}>
-          <div className="flex flex-col gap-1 pointer-events-auto">
-             <div className="flex items-center gap-2 text-brand font-black italic tracking-tighter text-xl">
-               <Zap size={20} fill="currentColor" />
-               Just Potato
-             </div>
-             <div className="text-[10px] text-ui-text-muted font-bold tracking-[0.3em] uppercase opacity-50">
-               换脑洞 · 不换行
-             </div>
-          </div>
-
-          <div className="hidden md:flex flex-col items-end gap-1 text-[10px] font-bold text-ui-text-muted opacity-60">
-            <span>VER: 2026.1.13</span>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
-              STATUS: EXPLORING 3D SPACE
-            </div>
-          </div>
-        </div>
-
         {/* --- Middle: 如果你觉得中心还是空，可以在这里加个微型指示器 --- */}
 
         {/* --- Bottom Row: 连接与卡片 --- */}

@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = getPostData(slug);
   if (!post) return { title: '文章未找到' };
   return {
-    title: `${post.metadata.title} | My Blog`,
+    title: `${post.metadata.title} | Just Potato`,
     description: post.metadata.description,
   };
 }
