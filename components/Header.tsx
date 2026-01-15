@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { 
   Sun, Moon, Github, Menu, X, ArrowRight, Command, Zap,
-  Home, FolderCode, BookOpen, User, Sparkles
+  Home, FolderCode, BookOpen, User, Sparkles, Plane
 } from 'lucide-react';
 
 /**
@@ -61,6 +61,7 @@ const Header = () => {
     { name: '首页', href: '/', icon: Home, desc: '回到起点' },
     { name: '项目', href: '/projects', icon: FolderCode, desc: '作品集锦' },
     { name: '文章', href: '/posts', icon: BookOpen, desc: '深度思考' },
+    { name: '旅游', href: '/travel', icon: Plane, desc: '足迹记录' },
     { name: '关于', href: '/about', icon: User, desc: '了解更多' },
   ];
 
