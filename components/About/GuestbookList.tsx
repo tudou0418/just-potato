@@ -43,33 +43,31 @@ export const GuestbookList = ({ messages }: GuestbookListProps) => {
   if (messages.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-ui-text-muted font-medium">还没有留言，快来抢沙发吧！</p>
+        <p className="dark:text-white/20 text-ui-text-muted text-sm">还没有留言，来做第一个吧。</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {messages.map((msg) => (
         <div
           key={msg.id}
-          className="bg-ui-surface border border-ui-border rounded-xl p-6 hover:border-brand/30 transition-all"
+          className="rounded-xl border dark:border-white/[0.06] border-ui-border dark:bg-white/[0.02] bg-ui-surface p-5 hover:dark:border-white/10 hover:border-brand/20 transition-all"
         >
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center font-bold text-sm">
-                {msg.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <h4 className="font-bold text-ui-text">{msg.name}</h4>
-                <div className="flex items-center gap-1 text-ui-text-muted text-xs">
-                  <Clock size={12} />
-                  <span>{formatDate(msg.created_at)}</span>
-                </div>
-              </div>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-brand/10 text-brand flex items-center justify-center font-black text-xs shrink-0">
+              {msg.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-bold dark:text-white text-ui-text truncate">{msg.name}</span>
+              <span className="text-[10px] dark:text-white/20 text-ui-text-muted shrink-0 flex items-center gap-1">
+                <Clock size={10} />
+                {formatDate(msg.created_at)}
+              </span>
             </div>
           </div>
-          <p className="text-ui-text-muted leading-relaxed">{msg.message}</p>
+          <p className="text-sm dark:text-white/50 text-ui-text-muted leading-relaxed pl-11">{msg.message}</p>
         </div>
       ))}
     </div>

@@ -24,51 +24,41 @@ export const GuestbookForm = ({ onSubmit, isSubmitting }: GuestbookFormProps) =>
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-bold text-ui-text mb-2">
-          昵称
-        </label>
         <input
           type="text"
-          id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="请输入你的昵称"
-          className="w-full px-4 py-3 bg-ui-surface border border-ui-border rounded-xl text-ui-text placeholder-ui-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+          placeholder="你的名字"
+          className="w-full px-4 py-3 dark:bg-white/[0.03] bg-ui-border/10 border dark:border-white/[0.06] border-ui-border rounded-xl text-sm dark:text-white text-ui-text dark:placeholder-white/20 placeholder-ui-text-muted/50 focus:outline-none focus:border-brand/40 transition-all"
           disabled={isSubmitting}
           required
         />
       </div>
-
       <div>
-        <label htmlFor="message" className="block text-sm font-bold text-ui-text mb-2">
-          留言内容
-        </label>
         <textarea
-          id="message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="写下你的想法..."
-          rows={4}
-          className="w-full px-4 py-3 bg-ui-surface border border-ui-border rounded-xl text-ui-text placeholder-ui-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all resize-none"
+          placeholder="说点什么..."
+          rows={3}
+          className="w-full px-4 py-3 dark:bg-white/[0.03] bg-ui-border/10 border dark:border-white/[0.06] border-ui-border rounded-xl text-sm dark:text-white text-ui-text dark:placeholder-white/20 placeholder-ui-text-muted/50 focus:outline-none focus:border-brand/40 transition-all resize-none"
           disabled={isSubmitting}
           required
         />
       </div>
-
       <button
         type="submit"
         disabled={isSubmitting || !name.trim() || !message.trim()}
-        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-brand text-white font-bold rounded-xl hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-brand"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-bold rounded-xl hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-brand/20 active:scale-95"
       >
         {isSubmitting ? (
           <>
-            <Loader2 size={18} className="animate-spin" />
-            提交中...
+            <Loader2 size={15} className="animate-spin" />
+            发送中...
           </>
         ) : (
           <>
-            <Send size={18} />
-            发送留言
+            <Send size={15} />
+            发送
           </>
         )}
       </button>
