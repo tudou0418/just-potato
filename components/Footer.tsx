@@ -11,7 +11,7 @@ import { Github, Twitter, Mail, Heart } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="py-16 border-t border-ui-border bg-ui-surface transition-colors duration-500">
+    <footer className="py-16 border-t border-ui-border bg-ui-surface">
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
           
@@ -49,7 +49,7 @@ const Footer = () => {
         {/* 版权信息 */}
         <div className="mt-12 pt-8 border-t border-ui-border/50 text-center">
           <div className="text-xs text-ui-text opacity-50 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2">
-            <span>© {new Date().getFullYear()} 你的名字.</span>
+            <span>© {new Date().getFullYear()} 土豆酱</span>
             <span className="hidden md:inline opacity-30">|</span>
             <span className="flex items-center gap-1">
               Powered by Next.js & <span className="text-brand font-medium">Tailwind v4</span>

@@ -10,7 +10,8 @@ const MANUAL_POSTS = [
       date: '2024-05-21',
       category: '技术笔记',
       readTime: '5 min',
-      description: '在这篇文章中，我将分享我是如何利用 Next.js 15 和 Tailwind CSS v4 搭建起这个数字花园的...'
+      description: '在这篇文章中，我将分享我是如何利用 Next.js 15 和 Tailwind CSS v4 搭建起这个数字花园的...',
+      tags: ['Next.js', 'React', 'Tailwind CSS']
     }
   }
 ];
@@ -48,5 +49,5 @@ export default async function PostsListPage() {
 
   const initialPosts = sortedPosts.slice(0, 4);
 
-  return <PostsListClient initialPosts={initialPosts} totalPosts={sortedPosts.length} />;
+  return <PostsListClient initialPosts={initialPosts} allPosts={sortedPosts} />;
 }

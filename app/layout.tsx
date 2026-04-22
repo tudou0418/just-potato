@@ -18,7 +18,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="antialiased font-sans">
         {/* attribute="class" 会将 .dark 类添加到 <html> 标签上 */}
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           {/* 注意：移除了外层 div 的 dark:bg-zinc-950，
               因为我们在 globals.css 的 body 里已经通过变量处理了背景 
           */}

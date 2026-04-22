@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { 
+import {
   Sun, Moon, Github, Menu, X, ArrowRight, Command, Zap,
   Home, FolderCode, BookOpen, User, Sparkles, Plane
 } from 'lucide-react';
+import DynamicLogo from '@/components/DynamicLogo';
 
 /**
  * 💡 修复说明：
@@ -68,7 +69,7 @@ const Header = () => {
   return (
     <>
       <nav 
-        className={`fixed top-0 left-0 right-0 z-[1000] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+        className={`fixed top-0 left-0 right-0 z-[1000] transition-all duration-300 ${
           isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         } ${
           scrolled || mobileMenuOpen
@@ -81,8 +82,8 @@ const Header = () => {
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="relative">
               <div className="absolute -inset-1.5 bg-gradient-to-tr from-brand to-amber-300 rounded-xl blur opacity-25 group-hover:opacity-60 transition duration-500"></div>
-              <div className="relative w-10 h-10 bg-brand rounded-xl flex items-center justify-center shadow-lg shadow-brand/20 group-hover:scale-110 group-active:scale-95 transition-all duration-300">
-                <Zap size={22} fill="currentColor" className="text-white" />
+              <div className="relative w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-brand/20 group-hover:scale-110 group-active:scale-95 transition-all duration-300">
+                <DynamicLogo size={40} showText={false} />
               </div>
             </div>
             <div className="flex flex-col">

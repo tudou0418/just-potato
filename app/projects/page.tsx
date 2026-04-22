@@ -144,7 +144,7 @@ const ProjectsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-ui-surface transition-colors duration-500 overflow-hidden">
+    <div className="min-h-screen bg-ui-surface overflow-hidden">
       <style>{`
         .glass-dock {
           background: rgba(var(--ui-surface-rgb), 0.7);

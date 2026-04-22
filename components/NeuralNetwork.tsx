@@ -333,7 +333,7 @@ const NeuralNetwork = () => {
   }, [isDark])
 
   return (
-    <div className="relative w-full h-[45vh] overflow-hidden bg-ui-surface transition-colors duration-500">
+    <div className="relative w-full h-[45vh] overflow-hidden bg-ui-surface">
       
       {/* 地球背景 - 占据整个容器 */}
       <div className="absolute inset-0 overflow-hidden" ref={globeRef}></div>

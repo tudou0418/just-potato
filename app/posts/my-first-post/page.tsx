@@ -5,7 +5,7 @@ import { ArrowLeft, Calendar, Clock, Tag, Share2, MessageCircle } from 'lucide-r
 
 const ArticlePage = () => {
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-zinc-950">
       {/* 文章顶部的装饰背景 */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-950/20 pointer-events-none" />
 

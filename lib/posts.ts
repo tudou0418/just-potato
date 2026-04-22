@@ -13,20 +13,39 @@ function calculateReadTime(content: string) {
   return `${minutes} min`;
 }
 
-export function getAllPosts() {
+export interface PostMetadata {
+  title: string;
+  date: string;
+  description: string;
+  category: string;
+  readTime: string;
+  tags: string[];
+  [key: string]: unknown;
+}
+
+export interface Post {
+  slug: string;
+  metadata: PostMetadata;
+  content: string;
+}
+
+export function getAllPosts(): Post[] {
   const filenames = fs.readdirSync(postsDirectory);
   return filenames.map((filename) => {
     const filePath = path.join(postsDirectory, filename);
     const fileContents = fs.readFileSync(filePath, 'utf8');
     const { data, content } = matter(fileContents);
-    
+
     return {
       slug: filename.replace(/\.mdx?$/, ''),
       metadata: {
         ...data,
-        category: data.category || '未分类', // 确保有分类
-        readTime: data.readTime || calculateReadTime(content), // 自动计算阅读时间
-      },
+        title: data.title || '',
+        description: data.description || '',
+        category: data.category || '未分类',
+        readTime: data.readTime || calculateReadTime(content),
+        tags: data.tags || [],
+      } as PostMetadata,
       content,
     };
   });

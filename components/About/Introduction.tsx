@@ -12,8 +12,7 @@ const Introduction = () => {
                 关于 <span className="text-brand">我</span>
               </h1>
               <p className="text-xl text-ui-text-muted leading-relaxed font-medium">
-                一个热爱折腾前端技术的数字游民，专注于构建极简且高效的 Web 应用，
-                探索代码中的设计美学。
+                纯牛马，白日梦想家
               </p>
             </div>
 
