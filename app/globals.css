@@ -117,6 +117,21 @@ article p {
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
 .animate-reveal {
   animation: fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   opacity: 0;
@@ -185,4 +200,559 @@ pre code {
 
 .dark pre code {
   color: #e2e8f0 !important;
+}
+
+/* ========== 科技感辅助样式 ========== */
+
+/* 网格点阵背景 - 用 radial-gradient 做 2px 间距的点阵 */
+.tech-grid {
+  background-image: radial-gradient(circle, rgba(96, 165, 250, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* 发光边框呼吸动画 */
+@keyframes glow-border {
+  0%, 100% {
+    border-color: rgba(96, 165, 250, 0.15);
+    box-shadow: 0 0 8px rgba(96, 165, 250, 0);
+  }
+  50% {
+    border-color: rgba(96, 165, 250, 0.35);
+    box-shadow: 0 0 16px rgba(96, 165, 250, 0.08);
+  }
+}
+
+.dark .glow-border-animate {
+  animation: glow-border 4s ease-in-out infinite;
+}
+
+/* 扫描线装饰 */
+.scan-line {
+  position: relative;
+}
+.scan-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
+}
+
+/* 渐变发光 blob */
+.glow-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(120px);
+  pointer-events: none;
+}
+
+/* 全息面板渐变边框 */
+.holo-border {
+  position: relative;
+}
+.holo-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), transparent 40%, transparent 60%, rgba(96, 165, 250, 0.15));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 卡片角落光点装饰 */
+.corner-glow {
+  position: relative;
+}
+.corner-glow::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.3), transparent 70%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* 终端窗口三圆点 */
+.terminal-dots::before {
+  content: '';
+  display: flex;
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border-radius: 9999px;
+  box-shadow: 16px 0 0 #eab308, 32px 0 0 #22c55e;
+}
+
+/* ========== 场景过渡动画系统 ========== */
+
+/* 场景层基础：所有场景共享的 fixed 定位 */
+.scene-layer {
+  z-index: 10;
+  will-change: transform, opacity, filter;
+}
+
+/* 场景激活态：正常显示 */
+.scene-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0px);
+  pointer-events: none;
+  transition: opacity 560ms ease, transform 560ms cubic-bezier(0.22, 1, 0.36, 1), filter 560ms ease;
+}
+
+/* 场景退出态：轻微下沉+淡出，避免整页幻灯片式缩放 */
+.scene-exit {
+  opacity: 0;
+  transform: translateY(24px) scale(0.985);
+  filter: blur(4px);
+  pointer-events: none;
+  transition: opacity 560ms ease, transform 560ms cubic-bezier(0.22, 1, 0.36, 1), filter 560ms ease;
+}
+
+/* 缩放穿梭闪光效果 */
+@keyframes portal-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+@keyframes scene-wash {
+  0% {
+    opacity: 0;
+    transform: translateY(-12%);
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(12%);
+  }
+}
+
+@keyframes robot-attend {
+  0%, 100% {
+    transform: translateX(-16vw) translateY(0) scale(1.03);
+  }
+  50% {
+    transform: translateX(-16vw) translateY(-14px) scale(1.03);
+  }
+}
+
+.robot-scene-attend {
+  animation: robot-attend 4.8s ease-in-out infinite;
+}
+
+@keyframes bot-loader-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes bot-loader-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes bot-loader-scan {
+  0% {
+    transform: translateY(-34px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.7;
+  }
+  55% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateY(34px);
+    opacity: 0;
+  }
+}
+
+@keyframes bot-loader-blink {
+  0%, 42%, 100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  46%, 50% {
+    transform: scaleY(0.22);
+    opacity: 0.72;
+  }
+}
+
+@keyframes bot-loader-progress {
+  0% {
+    transform: translateX(-72%);
+  }
+  55% {
+    transform: translateX(-12%);
+  }
+  100% {
+    transform: translateX(20%);
+  }
+}
+
+@keyframes bot-loader-line {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.bot-loader-shell {
+  width: 220px;
+  height: 290px;
+  animation: bot-loader-float 3.8s ease-in-out infinite;
+}
+
+.bot-loader-aura {
+  position: absolute;
+  inset: 16% 4% 18%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.28) 0%, rgba(59, 130, 246, 0.04) 56%, transparent 76%);
+  filter: blur(18px);
+  animation: bot-loader-pulse 3.2s ease-in-out infinite;
+}
+
+.bot-loader-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 130px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.16);
+  filter: blur(16px);
+  transform: translateX(-50%);
+}
+
+.bot-loader-head {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 148px;
+  height: 120px;
+  transform: translateX(-50%);
+}
+
+.bot-loader-antenna {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  width: 4px;
+  height: 26px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.7), rgba(96,165,250,0.25));
+  transform: translateX(-50%);
+}
+
+.bot-loader-antenna::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #7dd3fc;
+  box-shadow: 0 0 18px rgba(125, 211, 252, 0.55);
+  transform: translateX(-50%);
+}
+
+.bot-loader-face {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 36px;
+  background: linear-gradient(180deg, rgba(14, 23, 38, 0.98) 0%, rgba(8, 14, 24, 0.88) 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 48px rgba(0,0,0,0.34);
+}
+
+.bot-loader-face::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 26px;
+  border: 1px solid rgba(96, 165, 250, 0.18);
+}
+
+.bot-loader-eye {
+  position: absolute;
+  top: 42px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #ffffff 0 18%, #93c5fd 24%, #38bdf8 55%, rgba(56, 189, 248, 0.16) 100%);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+  animation: bot-loader-blink 4s ease-in-out infinite;
+}
+
+.bot-loader-eye-left {
+  left: 38px;
+}
+
+.bot-loader-eye-right {
+  right: 38px;
+  animation-delay: 0.12s;
+}
+
+.bot-loader-mouth {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  width: 54px;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(to right, rgba(96, 165, 250, 0.12), rgba(125, 211, 252, 0.7), rgba(96, 165, 250, 0.12));
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.2);
+  transform: translateX(-50%);
+}
+
+.bot-loader-scan {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 22px;
+  height: 36px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, rgba(125, 211, 252, 0), rgba(125, 211, 252, 0.24), rgba(125, 211, 252, 0));
+  filter: blur(3px);
+  animation: bot-loader-scan 2.8s linear infinite;
+}
+
+.bot-loader-body {
+  position: absolute;
+  left: 50%;
+  bottom: 30px;
+  width: 136px;
+  height: 128px;
+  border-radius: 32px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(180deg, rgba(14, 23, 38, 0.94) 0%, rgba(9, 14, 24, 0.86) 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 18px 40px rgba(0,0,0,0.28);
+  transform: translateX(-50%);
+}
+
+.bot-loader-core {
+  position: absolute;
+  left: 50%;
+  top: 28px;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255,255,255,0.95) 0 16%, #7dd3fc 28%, rgba(59,130,246,0.8) 62%, rgba(59,130,246,0.06) 100%);
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.36);
+  transform: translateX(-50%);
+  animation: bot-loader-pulse 2.4s ease-in-out infinite;
+}
+
+.bot-loader-arm {
+  position: absolute;
+  top: 36px;
+  width: 16px;
+  height: 68px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.9) 0%, rgba(71, 85, 105, 0.45) 100%);
+}
+
+.bot-loader-arm-left {
+  left: -10px;
+  transform: rotate(18deg);
+}
+
+.bot-loader-arm-right {
+  right: -10px;
+  transform: rotate(-18deg);
+}
+
+.bot-loader-line {
+  opacity: 0;
+  animation: bot-loader-line 0.42s ease-out forwards;
+}
+
+.bot-loader-progress {
+  width: 72%;
+  animation: bot-loader-progress 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes article-robot-float {
+  0%, 100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -10px);
+  }
+}
+
+.article-robot-float {
+  animation: article-robot-float 4.2s ease-in-out infinite;
+}
+
+/* 轮盘轨道旋转 */
+@keyframes orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 轮盘节点微浮动 */
+@keyframes node-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* 轮盘菜单节点基础样式 */
+.radial-node {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radial-node:hover {
+  transform: scale(1.15);
+}
+
+/* 轮盘节点发光圆圈 */
+.radial-node-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 8, 16, 0.6);
+  border: 1.5px solid var(--node-color, rgba(255, 255, 255, 0.15));
+  color: var(--node-color, rgba(255, 255, 255, 0.5));
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(16px);
+  animation: node-float 4s ease-in-out infinite, node-glow 3s ease-in-out infinite;
+}
+
+.radial-node-circle:hover {
+  background: rgba(6, 8, 16, 0.75);
+}
+
+/* 节点呼吸发光 */
+@keyframes node-glow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.2);
+  }
+}
+
+/* ========== 深空星空 ========== */
+
+/* 星点用 box-shadow 实现，每个"点"是一个 1px 圆 + shadow 列表 */
+.stars-layer-sm {
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  box-shadow:
+    12vw 8vh 0 0 rgba(255,255,255,0.15),
+    28vw 22vh 0 0 rgba(255,255,255,0.12),
+    45vw 5vh 0 0 rgba(255,255,255,0.10),
+    67vw 18vh 0 0 rgba(255,255,255,0.13),
+    82vw 42vh 0 0 rgba(255,255,255,0.11),
+    5vw 55vh 0 0 rgba(255,255,255,0.14),
+    35vw 72vh 0 0 rgba(255,255,255,0.10),
+    58vw 88vh 0 0 rgba(255,255,255,0.12),
+    78vw 65vh 0 0 rgba(255,255,255,0.11),
+    92vw 12vh 0 0 rgba(255,255,255,0.13),
+    18vw 92vh 0 0 rgba(255,255,255,0.10),
+    42vw 38vh 0 0 rgba(255,255,255,0.12),
+    55vw 62vh 0 0 rgba(255,255,255,0.11),
+    72vw 82vh 0 0 rgba(255,255,255,0.14),
+    8vw 35vh 0 0 rgba(255,255,255,0.10),
+    88vw 55vh 0 0 rgba(255,255,255,0.12),
+    22vw 48vh 0 0 rgba(255,255,255,0.11),
+    48vw 15vh 0 0 rgba(255,255,255,0.13),
+    75vw 28vh 0 0 rgba(255,255,255,0.10),
+    38vw 58vh 0 0 rgba(255,255,255,0.12),
+    62vw 78vh 0 0 rgba(255,255,255,0.11),
+    15vw 70vh 0 0 rgba(255,255,255,0.13),
+    85vw 90vh 0 0 rgba(255,255,255,0.10),
+    52vw 45vh 0 0 rgba(255,255,255,0.12),
+    95vw 35vh 0 0 rgba(255,255,255,0.11),
+    3vw 15vh 0 0 rgba(255,255,255,0.14),
+    32vw 85vh 0 0 rgba(255,255,255,0.10),
+    68vw 52vh 0 0 rgba(255,255,255,0.12),
+    25vw 30vh 0 0 rgba(255,255,255,0.11);
+}
+
+.stars-layer-md {
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  animation: twinkle-slow 6s ease-in-out infinite alternate;
+  box-shadow:
+    20vw 15vh 0 0.5px rgba(255,255,255,0.25),
+    55vw 35vh 0 0.5px rgba(255,255,255,0.22),
+    80vw 60vh 0 0.5px rgba(255,255,255,0.28),
+    10vw 80vh 0 0.5px rgba(255,255,255,0.20),
+    70vw 10vh 0 0.5px rgba(255,255,255,0.25),
+    40vw 55vh 0 0.5px rgba(255,255,255,0.22),
+    90vw 75vh 0 0.5px rgba(255,255,255,0.26),
+    30vw 40vh 0 0.5px rgba(255,255,255,0.20),
+    65vw 85vh 0 0.5px rgba(255,255,255,0.24),
+    15vw 50vh 0 0.5px rgba(255,255,255,0.22),
+    50vw 70vh 0 0.5px rgba(255,255,255,0.25),
+    85vw 25vh 0 0.5px rgba(255,255,255,0.20);
+}
+
+.stars-layer-lg {
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  animation: twinkle-slow 4s ease-in-out infinite alternate-reverse;
+  box-shadow:
+    25vw 20vh 0 1px rgba(96,165,250,0.35),
+    72vw 45vh 0 1px rgba(255,255,255,0.30),
+    48vw 75vh 0 1px rgba(96,165,250,0.28),
+    88vw 80vh 0 1px rgba(255,255,255,0.32),
+    8vw 42vh 0 1px rgba(96,165,250,0.30);
+}
+
+@keyframes twinkle-slow {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
 }

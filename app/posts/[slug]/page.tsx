@@ -1,9 +1,11 @@
 import React from 'react';
+import Link from 'next/link';
 import { ArrowLeft, Calendar, Clock, Share2, MessageCircle } from 'lucide-react';
 import { getAllPosts } from '@/lib/posts';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import remarkGfm from 'remark-gfm';
 import TableOfContents from '@/components/TableOfContents';
+import RobotFollowCursorArticle from '@/components/posts/RobotFollowCursorArticle';
 import {
   Callout,
   Alert,
@@ -44,6 +46,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   if (!post) return notFound();
 
+  if (slug === 'robot-follow-cursor') {
+    return <RobotFollowCursorArticle metadata={post.metadata} />;
+  }
+
   const { title, date, category, readTime, description, tags } = post.metadata;
 
   return (
@@ -52,13 +58,13 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
       {/* 面包屑导航 */}
       <div className="relative container mx-auto px-6 pt-12 max-w-7xl">
-        <a
+        <Link
           href="/posts"
           className="inline-flex items-center gap-2 text-ui-text-muted hover:text-brand transition-colors mb-8 group font-bold text-sm"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           返回文章列表
-        </a>
+        </Link>
       </div>
 
       {/* 两栏布局：左侧文章，右侧目录 */}
