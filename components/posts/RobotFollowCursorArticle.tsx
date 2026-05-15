@@ -400,23 +400,25 @@ export default function RobotFollowCursorArticle({ metadata }: RobotFollowCursor
           <DemoStage />
         </div>
 
-        {/* 页内导航 */}
-        <nav className="mt-12 flex flex-wrap gap-2">
-          {[
-            { id: 'tools', label: '工具链' },
-            { id: 'reproduce', label: '复刻指南' },
-            { id: 'ai-review', label: 'AI 协作' },
-            { id: 'devlog', label: '开发记录' },
-          ].map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[12px] font-bold text-slate-500 transition-all hover:border-sky-300 hover:text-sky-600 dark:border-white/8 dark:bg-white/[0.03] dark:text-white/40 dark:hover:border-sky-400/40 dark:hover:text-sky-300"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
+        {/* 页内导航 — sticky 固定 */}
+        <div className="sticky top-0 z-20 -mx-6 px-6 py-3 backdrop-blur-xl bg-slate-50/80 dark:bg-[#050810]/80 border-b border-slate-200/60 dark:border-white/6">
+          <nav className="flex flex-wrap gap-2">
+            {[
+              { id: 'tools', label: '工具链' },
+              { id: 'reproduce', label: '复刻指南' },
+              { id: 'ai-review', label: 'AI 协作' },
+              { id: 'devlog', label: '开发记录' },
+            ].map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[12px] font-bold text-slate-500 transition-all hover:border-sky-300 hover:text-sky-600 dark:border-white/8 dark:bg-white/[0.03] dark:text-white/40 dark:hover:border-sky-400/40 dark:hover:text-sky-300"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </div>
 
         {/* 工具链 */}
         <section id="tools" className="mt-16">
