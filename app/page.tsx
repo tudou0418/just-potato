@@ -1280,6 +1280,8 @@ function Spotlight() {
 export default function Home() {
   const router = useRouter()
   const [projectIdx, setProjectIdx] = useState(0)
+  const [sceneReady, setSceneReady] = useState(false)
+  const [loaderVisible, setLoaderVisible] = useState(true)
   const goProjects = useCallback(() => router.push('/projects'), [router])
   const handleProjectStep = useCallback((direction: 1 | -1) => {
     const next = Math.min(PROJECTS.length - 1, Math.max(0, projectIdx + direction))
@@ -1307,6 +1309,9 @@ export default function Home() {
       isPrimary: event.isPrimary,
     }))
   }, [])
+  const handleSceneReady = useCallback(() => {
+    setSceneReady(true)
+  }, [])
   const { currentScene, isTransitioning, goToScene } = useScrollJack(goProjects, handleProjectStep)
 
   useEffect(() => {
@@ -1316,6 +1321,12 @@ export default function Home() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!sceneReady) return
+    // canvas 首帧已就绪，loading 屏立即消失
+    setLoaderVisible(false)
+  }, [sceneReady])
+
   return (
     <div className="fixed inset-0 z-50">
       {/* 深空星空背景 */}
@@ -1324,46 +1335,61 @@ export default function Home() {
       {/* Spline 3D 场景 */}
       <SplineScene
         className={currentScene === 2 ? 'robot-scene-attend' : ''}
+        onReady={handleSceneReady}
         style={{
           transform: currentScene === 2 ? undefined : 'translateX(0) scale(1)',
         }}
       />
 
-      {/* 头部光锥聚光灯 */}
-      <Spotlight />
+      <div
+        className={`transition-opacity duration-500 ${
+          sceneReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        {/* 头部光锥聚光灯 */}
+        <Spotlight />
 
-      <HeroOverlay isActive={currentScene === 0} />
-      <ProjectsShowcase
-        isActive={currentScene === 1}
-        activeIdx={projectIdx}
-        setActiveIdx={setProjectIdx}
-      />
-
-      <div className="hidden md:block">
-        <RadialMenu
-          isActive={currentScene === 2}
-          onPointerMove={forwardPointerToSpline}
+        <HeroOverlay isActive={currentScene === 0} />
+        <ProjectsShowcase
+          isActive={currentScene === 1}
+          activeIdx={projectIdx}
+          setActiveIdx={setProjectIdx}
         />
+
+        <div className="hidden md:block">
+          <RadialMenu
+            isActive={currentScene === 2}
+            onPointerMove={forwardPointerToSpline}
+          />
+        </div>
+
+        <MobileRadialDrawer isActive={currentScene === 2} />
+
+        <SceneTransitionOverlay isTransitioning={isTransitioning} />
+
+        {/* 全局场景进度指示器 */}
+        <div className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3">
+          {[0, 1, 2].map((i) => (
+            <button
+              key={i}
+              onClick={() => goToScene(i)}
+              className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                i === currentScene
+                  ? 'bg-brand w-2 h-6 shadow-lg shadow-brand/30'
+                  : 'bg-white/20 hover:bg-white/40'
+              }`}
+              aria-label={`切换到场景 ${i + 1}`}
+            />
+          ))}
+        </div>
       </div>
 
-      <MobileRadialDrawer isActive={currentScene === 2} />
-
-      <SceneTransitionOverlay isTransitioning={isTransitioning} />
-
-      {/* 全局场景进度指示器 */}
-      <div className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3">
-        {[0, 1, 2].map((i) => (
-          <button
-            key={i}
-            onClick={() => goToScene(i)}
-            className={`w-2 h-2 rounded-full transition-all duration-500 ${
-              i === currentScene
-                ? 'bg-brand w-2 h-6 shadow-lg shadow-brand/30'
-                : 'bg-white/20 hover:bg-white/40'
-            }`}
-            aria-label={`切换到场景 ${i + 1}`}
-          />
-        ))}
+      <div
+        className={`fixed inset-0 z-[120] transition-opacity duration-300 ${
+          loaderVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <SplineLoadingScreen ready={sceneReady} />
       </div>
     </div>
   )
