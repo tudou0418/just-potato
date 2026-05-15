@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState, useCallback } from 'react'
+import React, { useRef, useCallback } from 'react'
 import { Application } from '@splinetool/runtime'
 import Spline from '@splinetool/react-spline'
 
@@ -14,18 +14,15 @@ export default function SplineScene({
   onReady?: () => void
 }) {
   const splineRef = useRef<Application | null>(null)
-  const [firstFrameReady, setFirstFrameReady] = useState(false)
 
   const onLoad = useCallback((spline: Application) => {
     splineRef.current = spline
 
-    // onLoad 触发时 Spline SDK 已初始化，但 WebGL 渲染管线
-    // 可能还没把首帧像素刷到屏幕。等 3 个 rAF 帧确保管线冲刷完毕。
+    // onLoad 后等几帧让 WebGL 管线冲刷首帧，再通知 loading 屏可以消失
     let frame = 0
     const flush = () => {
       frame++
-      if (frame >= 3) {
-        setFirstFrameReady(true)
+      if (frame >= 6) {
         onReady?.()
       } else {
         requestAnimationFrame(flush)
@@ -48,7 +45,6 @@ export default function SplineScene({
           left: 0,
           width: '100%',
           height: '100vh',
-          opacity: firstFrameReady ? 1 : 0,
         }}
       />
     </div>
