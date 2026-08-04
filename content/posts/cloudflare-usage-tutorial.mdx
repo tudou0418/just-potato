@@ -1,0 +1,388 @@
+---
+title: "Cloudflare 保姆级教程：Pages、Workers、D1、Wrangler 到底是什么，怎么用"
+date: "2026-08-04"
+category: "技术笔记"
+readTime: "16 min"
+description: "用健身应用 jianshen-ds 的真实部署经历，大白话讲清 Cloudflare、Workers、Pages、D1、Wrangler 是什么，和其他方案怎么选，并给出一套可复制的完整部署步骤。"
+tags: ["Cloudflare", "Workers", "Pages", "D1", "Wrangler", "Hono", "Drizzle"]
+---
+
+# Cloudflare 保姆级教程：Pages、Workers、D1、Wrangler 到底是什么，怎么用
+
+最近我把健身动作库项目 jianshen-ds 完整部署到了 Cloudflare 上：前端、后端、数据库，全部用 Cloudflare 一家搞定，而且基本免费。这个过程里我踩了不少坑，也补了很多课。
+
+如果你和我一样，第一次接触 Cloudflare 时被 Workers、Pages、D1、Wrangler、Binding 这些词绕晕，那这篇文章就是给你写的。我不假设你已经懂任何背景，所有专业术语都会用大白话讲一遍，最后还会对比其他常见方案，告诉你什么时候该选它、什么时候别选它。
+
+<Callout type="info" title="先说结论">
+Cloudflare 是一家云服务公司。我们在 jianshen-ds 里用它免费托管了整个项目：Pages 放前端页面，Workers 跑后端接口，D1 存数据库，Wrangler 是操作这三者的命令行工具。整套东西不用买服务器、不用装环境、不用管运维。
+</Callout>
+
+## 太长不看版：这套架构长什么样
+
+一句话概括 jianshen-ds 的部署架构：
+
+浏览器用户 → 打开 Pages 托管的静态网站 → 页面里的 JS 调用 Workers 上的 API → API 读写 D1 数据库 → 数据回到页面展示
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│                      用户浏览器                           │
+└───────────────┬─────────────────────────┬───────────────┘
+                │ 1. 打开网页              │ 2. 发起 API 请求
+                ▼                         ▼
+      ┌──────────────────┐      ┌──────────────────┐
+      │  Cloudflare Pages │      │ Cloudflare Workers│
+      │  前端静态文件      │      │  Hono API 接口    │
+      │  Next.js 构建产物  │      │  /api/exercises  │
+      └──────────────────┘      └────────┬─────────┘
+                                         │ 3. 读写数据
+                                         ▼
+                               ┌──────────────────┐
+                               │  Cloudflare D1    │
+                               │  SQLite 数据库    │
+                               └──────────────────┘
+```
+
+三个产品各司其职，后面每一块都会细讲。
+
+## 一、Cloudflare 到底是个啥？（大白话版）
+
+Cloudflare 是一家 2009 年成立的美国公司，早期靠「让网站访问更快更安全」出名。它最核心的本事是：在全球 300 多个城市都部署了服务器，可以把你的网站内容「复制」到离访问者最近的那台服务器上。用户访问时就不用绕大半个地球去原始服务器取数据，速度自然快，还能顺带挡住恶意攻击。
+
+后来它从「给别人的网站加速」发展成了「自己的完整云平台」，就是我们现在用的这套。对我们的意义是：**不用买服务器，不用配环境，写代码 + 一条命令就能上线**。
+
+Cloudflare 的产品很多，我们只需要认识下面几个和开发者相关的：
+
+| 产品 | 一句话大白话 | 我们项目里用了吗 |
+|---|---|---|
+| Pages | 放纯静态网页（HTML/CSS/JS），免费、带 CDN | 用了，放前端 |
+| Workers | 在云端跑代码的「云函数」，按请求计费 | 用了，跑后端 API |
+| D1 | 云上的 SQLite 数据库，免费额度内随便用 | 用了，存数据 |
+| R2 | 云上的「网盘」，存图片、文件、视频 | 暂时没用 |
+| KV | 云上的「超快缓存字典」，存键值对 | 暂时没用 |
+| Wrangler | 官方命令行工具，管上面所有东西 | 天天用 |
+
+## 二、jianshen-ds 用到了 Cloudflare 的什么？
+
+先交代一下项目背景。jianshen-ds 是一个「健身动作库 + 训练记录」应用，数据来自一个包含 1324 个健身动作的开源数据集，我还加了自定义动作、训练记录、营养记录等功能。项目结构是 pnpm monorepo：
+
+```text
+jianshen-ds/
+├── apps/
+│   ├── api/        # 后端：Hono + Drizzle + D1 → 部署到 Workers
+│   └── web/        # 前端：Next.js 静态导出 → 部署到 Pages
+├── packages/
+│   └── shared/     # 前后端共享的类型和常量
+└── seed/
+    └── exercises.sql  # 1324 个动作的初始数据
+```
+
+对应到 Cloudflare 就是三个角色：
+
+<FeatureGrid>
+  <FeatureItem icon="🎨" title="Pages = 前端展厅" description="Next.js 构建出的静态文件（HTML/CSS/JS）上传到 Pages，用户访问的网页就是它。无需服务器，全球加速，免费。">
+  </FeatureItem>
+  <FeatureItem icon="⚙️" title="Workers = 后端厨房" description="所有 /api 接口跑在 Workers 上。用户点按钮、查数据、存记录，都是页面 JS 在调用这些接口。">
+  </FeatureItem>
+  <FeatureItem icon="🗄️" title="D1 = 数据仓库" description="训练记录、自定义动作都存在 D1 里。它是一个云上的 SQLite 数据库，接口代码通过 Drizzle ORM 读写它。">
+  </FeatureItem>
+</FeatureGrid>
+
+<Callout type="warning" title="为什么前端要「静态」">
+Pages 只能放静态文件，所以 Next.js 必须用「静态导出」模式（output: export），把每个页面在构建时提前生成好 HTML。这样做的好处是便宜、快、不容易挂；代价是没法在服务器端动态渲染。对 jianshen-ds 这种数据都在 API 里、页面本身不依赖服务器的项目，完全够用。
+</Callout>
+
+## 三、专业术语逐个讲（新手必看）
+
+这一节是全文重点。下面每个词，我都会先说人话，再讲它在项目里对应的代码。
+
+### 3.1 Cloudflare Workers：云函数 / 边缘计算
+
+**大白话**：Workers 就是「你不用买服务器，把一段代码交上去，Cloudflare 帮你在全球几百个节点上运行它」。用户请求来的时候，就近的节点直接执行你的代码返回结果，所以叫「边缘计算」。
+
+**专业版**：Serverless（无服务器）函数。你不用关心操作系统、进程、扩容，Cloudflare 自动按请求量调度，按调用次数计费。
+
+**项目里**：`apps/api` 整个后端就是一个 Worker。入口文件 `src/index.ts` 导出一个 Hono 应用，Wrangler 把它打包上传。部署后你得到一个 `xxx.workers.dev` 的网址，所有 `/api/*` 接口都从那里来。
+
+### 3.2 Cloudflare Pages：静态站点托管
+
+**大白话**：Pages 就像一个免费的「网页仓库」，你把做好的网页文件传上去，它帮你托管、加速、给免费子域名。
+
+**项目里**：`apps/web` 用 `next build` 把 Next.js 项目构建成纯静态文件输出到 `out/` 目录，然后 `wrangler pages deploy out` 一键上传。部署完得到 `xxx.pages.dev` 的网址，就是用户访问的网站。
+
+### 3.3 D1：云上的 SQLite
+
+**大白话**：D1 就是「在云上给你一个数据库」。它是基于 SQLite 的。SQLite 可以理解成「一个文件就是一个数据库」，特别轻量、免安装，非常适合中小型应用。
+
+**专业版**：D1 是 Cloudflare 托管的 SQLite，数据在全球多个节点复制，读写走 Workers 的绑定，延迟很低。
+
+**项目里**：`wrangler.toml` 里声明了一个叫 `DB` 的绑定，指向数据库 `jianshen-ds-db`。代码里用 Drizzle ORM 操作它，比如查全部动作就是一句 `db.select().from(exercises)`。
+
+### 3.4 Wrangler：Cloudflare 的官方命令行工具
+
+**大白话**：Wrangler 是 Cloudflare 发的「遥控器」。创建数据库、跑本地调试、上传部署，全靠它一条命令搞定。它对应项目里的这些脚本：
+
+| package.json 脚本 | 实际执行的命令 | 作用 |
+|---|---|---|
+| dev | wrangler dev | 本地起一个模拟环境调试 API |
+| deploy | wrangler deploy | 把 Worker 部署上线 |
+| db:migrate:local | wrangler d1 migrations apply ... --local | 在本地数据库执行迁移 |
+| db:migrate:remote | wrangler d1 migrations apply ... --remote | 在线上数据库执行迁移 |
+| db:seed:local | wrangler d1 execute ... --file=seed/exercises.sql --local | 本地导入初始数据 |
+| db:seed:remote | wrangler d1 execute ... --file=seed/exercises.sql --remote | 线上导入初始数据 |
+
+### 3.5 其他高频术语
+
+**CDN / 边缘节点**：内容分发网络。把内容复制到全球各地，用户从最近的节点拿，速度快。Pages 自带 CDN。
+
+**DNS**：域名系统，把 `example.com` 这种名字翻译成服务器 IP。Cloudflare 最出名的就是免费 DNS。
+
+**Serverless（无服务器）**：不是没有服务器，而是你不用管服务器，平台帮你管。
+
+**静态导出（Static Export）**：构建时把所有页面提前生成成 HTML，部署后只有静态文件。对应 Next.js 的 `output: "export"`。
+
+**Binding（绑定）**：把数据库、KV 等资源「接」进 Worker 的通道。配置在 `wrangler.toml` 里，代码里直接 `c.env.DB` 就能用。上面写的 `DB` 就是绑定名。
+
+**ORM / Drizzle**：ORM 是「用代码而不是 SQL 字符串操作数据库」的工具，能少写很多容易错的 SQL。Drizzle 是其中一种轻量选择。
+
+**Migration（迁移）**：数据库表结构的版本管理。改表结构不直接改，而是生成一份「变更说明书」（SQL 文件），按顺序执行，方便团队同步和回滚。项目里 `db:generate` 生成迁移，`db:migrate:*` 执行迁移。
+
+**Seed（数据填充）**：给数据库灌初始数据，比如那 1324 个健身动作，就是通过 seed 导进去的。
+
+**CORS（跨域）**：浏览器的安全机制：`a.com` 的页面默认不允许随便请求 `b.com` 的接口。所以 API 必须声明「我允许哪些域名来调我」。项目里只放行了 Pages 域名和本地调试地址。
+
+**Hono**：一个非常轻量的 Web 框架，专为 Workers 这类环境设计，写法类似 Express。
+
+**workers.dev / pages.dev**：Cloudflare 送的免费子域名，部署完立刻能访问。
+
+**nodejs_compat**：兼容性标志。Workers 默认运行环境偏浏览器，加上这个标志才能用 Node.js 的部分能力（比如某些内置模块）。
+
+**KV / R2 / Durable Objects**：Cloudflare 其他存储产品。KV 是键值缓存，R2 是对象存储（类似 AWS S3），Durable Objects 是有状态的单例服务。这次项目没用到，知道有这回事就行。
+
+## 四、为什么用 Cloudflare？和其他方案对比
+
+没有完美的技术方案，只有合适的选择。我把 jianshen-ds 用到的三块分别和其他常见方案对比了一遍。
+
+### 4.1 前端托管：Pages vs 其他
+
+| 方案 | 免费额度 | 优点 | 缺点 |
+|---|---|---|---|
+| Cloudflare Pages | 无限静态请求 | 免费量大、全球 CDN、域名便宜 | 只能静态/边缘函数 |
+| Vercel | 100GB 带宽/月 | 和 Next.js 结合最顺 | 免费额度较紧，超了要钱 |
+| Netlify | 100GB 带宽/月 | 功能全、生态成熟 | 和 Vercel 类似 |
+| GitHub Pages | 无限静态 | 免费、和 GitHub 绑定 | 只能纯静态，无边缘能力 |
+| 自建 Nginx | 看服务器价格 | 完全可控 | 要买服务器、要运维 |
+
+**结论**：纯静态站 + 想要免费额度大，Cloudflare Pages 很划算。
+
+### 4.2 后端 API：Workers vs 其他
+
+| 方案 | 收费方式 | 优点 | 缺点 |
+|---|---|---|---|
+| Cloudflare Workers | 10 万请求/天免费 | 免运维、全球节点、冷启动快 | 环境受限，生态不如 Node 全 |
+| Vercel Functions | 按量免费额度 | 和 Next.js 集成好 | 有超时限制，免费额度一般 |
+| 阿里云函数计算 | 按量付费 | 国内访问快、有免费额度 | 配置略繁琐，生态绑定阿里 |
+| 自建 VPS + Node | 月付服务器 | 完全可控、可跑任意程序 | 要运维、要防攻击、要备份 |
+
+**结论**：个人项目、想少花钱少操心，Workers 是很好的选择。
+
+### 4.3 数据库：D1 vs 其他
+
+| 方案 | 类型 | 免费额度 | 优点 | 缺点 |
+|---|---|---|---|---|
+| Cloudflare D1 | SQLite | 5GB、读写 500 万行/天 | 和 Workers 同生态、免运维 | SQLite 不适合超大并发 |
+| Supabase | PostgreSQL | 500MB | 功能强、有后台面板 | 免费额度小，国内访问一般 |
+| PlanetScale | MySQL | 已停止免费套餐 | 兼容 MySQL | 收费 |
+| 自建 MySQL | MySQL | 看服务器 | 完全可控 | 要运维 |
+
+**结论**：中小型应用 + 已经用 Workers，D1 无缝衔接最省事；想要成熟 SQL 和后台面板，Supabase 更稳。
+
+### 4.4 什么时候别用 Cloudflare
+
+- 需要跑很重的计算、常驻内存服务 → 用自建服务器或传统云主机
+- 需要国内访问速度保证 → Cloudflare 免费版国内节点绕路，体验一般
+- 需要 PostgreSQL 的高级特性 → 用 Supabase 这类托管 PG
+- 完全依赖某些 Node 原生模块 → Workers 兼容层不一定支持
+
+## 五、手把手：从 0 复现这套架构
+
+下面按真实项目的步骤走一遍，你可以照着敲。所有命令都是在项目根目录（或对应子目录）执行的。
+
+### 5.0 前置准备
+
+1. 注册一个 Cloudflare 账号（免费）。
+2. 装好 Node.js（18 以上）和 pnpm。
+3. 安装 Wrangler：在项目里 `pnpm add -D wrangler`，或全局 `npm i -g wrangler`。
+4. 登录：`wrangler login`，会打开浏览器让你授权。之后命令才能操作你的账号。
+
+### 5.1 创建 D1 数据库
+
+```bash
+wrangler d1 create jianshen-ds-db
+```
+
+执行完会输出类似这样的内容（ID 是随便写的示例）：
+
+```txt
+✅ Successfully created DB 'jianshen-ds-db' in region APAC
+Created your database using D1's new storage backend.
+[[d1_databases]]
+binding = "DB"
+database_name = "jianshen-ds-db"
+database_id = "cc163999-7630-4a45-aa94-5078050a287b"
+```
+
+**关键一步**：把输出的 `database_id` 复制回填到 `wrangler.toml` 里，否则 Worker 找不到数据库。项目里的 `wrangler.toml` 长这样：
+
+```toml filename="apps/api/wrangler.toml"
+name = "jianshen-ds-api"          # Worker 名字，会出现在 workers.dev 子域名里
+main = "src/index.ts"             # 入口文件
+compatibility_date = "2026-07-01" # 兼容性日期
+compatibility_flags = ["nodejs_compat"]  # 启用 Node.js 兼容
+
+[observability]
+enabled = true                    # 开启日志观测
+
+[[d1_databases]]
+binding = "DB"                    # 代码里用 c.env.DB 访问
+database_name = "jianshen-ds-db"  # 数据库名
+database_id = "cc163999-..."      # 注意：必须换成你自己的 database_id
+migrations_dir = "migrations"     # 迁移文件目录
+```
+
+### 5.2 写后端 API（Hono + Drizzle）
+
+API 入口 `apps/api/src/index.ts`：
+
+```ts filename="apps/api/src/index.ts"
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { exercisesRouter } from "./routes/exercises";
+import type { Env } from "./env";
+
+const app = new Hono<{ Bindings: Env }>();
+
+// CORS：只放行自己的前端域名和本地调试
+app.use("/api/*", cors({
+  origin: ["https://jianshen-ds.pages.dev", "http://localhost:3000"],
+}));
+
+app.get("/api/health", (c) => c.json({ status: "ok" }));
+app.route("/api/exercises", exercisesRouter);
+
+export default app;
+```
+
+连接 D1 的客户端 `apps/api/src/db/client.ts`：
+
+```ts filename="apps/api/src/db/client.ts"
+import { drizzle } from "drizzle-orm/d1";
+import * as schema from "./schema";
+
+export function createDb(env) {
+  return drizzle(env.DB, { schema }); // env.DB 就是 wrangler.toml 里的绑定
+}
+```
+
+### 5.3 本地调试
+
+```bash
+pnpm --filter @jianshen-ds/api dev
+# 等价于在 apps/api 下执行 wrangler dev
+```
+
+`wrangler dev` 会在本地起一个模拟环境（内置 workerd 运行时），还会自动创建一份**本地数据库**（存在 `.wrangler` 目录），接口和数据库都能在本地跑起来。
+
+### 5.4 迁移 + 导入初始数据
+
+改完表结构后：
+
+```bash
+# 1. 根据 schema 生成迁移 SQL
+pnpm db:generate
+
+# 2. 先应用到本地库
+pnpm db:migrate:local
+
+# 3. 再把 1324 个动作数据导进本地库
+pnpm db:seed:local
+```
+
+本地验证没问题后，同样操作推到线上：
+
+```bash
+pnpm db:migrate:remote
+pnpm db:seed:remote
+```
+
+### 5.5 部署 API
+
+```bash
+pnpm deploy:api
+# 等价于在 apps/api 下执行 wrangler deploy
+```
+
+完成后会输出 `https://jianshen-ds-api.xxx.workers.dev` 这样的地址，这就是线上 API 地址。
+
+### 5.6 部署前端（Next.js 静态导出 → Pages）
+
+前端关键配置 `apps/web/next.config.mjs`：
+
+```js filename="apps/web/next.config.mjs"
+const nextConfig = {
+  output: "export",          // 关键：纯静态导出，构建产物在 out/
+  images: { unoptimized: true }, // 静态导出不能走图片优化
+};
+```
+
+部署命令：
+
+```bash
+pnpm deploy:web
+# 等价于：next build && wrangler pages deploy out --project-name jianshen-ds
+```
+
+`next build` 把页面生成到 `out/`，`wrangler pages deploy out` 把整个目录上传到 Pages，得到 `https://jianshen-ds.pages.dev`。
+
+### 5.7 前后端打通
+
+前端代码里把 API 地址指向 Worker：
+
+```ts
+const API_BASE = "https://jianshen-ds-api.xxx.workers.dev";
+```
+
+同时确保 Worker 的 CORS 里包含了 Pages 域名（见 5.2 的配置）。这样浏览器从 `pages.dev` 页面请求 `workers.dev` 接口就不会被拦截。
+
+## 六、常用命令速查表
+
+| 命令 | 作用 | 大白话 |
+|---|---|---|
+| wrangler login | 登录账号 | 授权遥控器 |
+| wrangler d1 create 名称 | 创建数据库 | 新建仓库 |
+| wrangler dev | 本地跑 Worker | 本地排练 |
+| wrangler deploy | 部署 Worker | 正式上台 |
+| wrangler pages deploy out | 部署静态站 | 把网页挂上线 |
+| wrangler d1 migrations apply 名称 --remote | 线上执行迁移 | 线上改表结构 |
+| wrangler d1 execute 名称 --remote --file=x.sql | 线上执行 SQL | 线上灌数据 |
+
+## 七、踩过的坑 & 注意事项
+
+1. **database_id 忘回填**：创建完 D1 不把 ID 填进 wrangler.toml，部署后接口直接 500。这是最经典的坑。
+2. **本地库和线上库是两份**：本地 `--local` 和线上 `--remote` 数据互不相通。改完表要在本地测，也要记得推到远程。
+3. **CORS 没配**：前端调用 API 报跨域错误，多半是 CORS 白名单里没加域名，或者漏了 `OPTIONS` 预检请求。
+4. **静态导出不能用图片优化**：`output: "export"` 下 Next.js 的 Image 优化不可用，要么 `unoptimized: true`，要么改用 img 标签。
+5. **免费额度**：Workers 免费版约 10 万请求/天，D1 免费 5GB 存储，个人项目绰绰有余，但商用前要确认额度。
+6. **国内访问**：Cloudflare 免费版对国内用户不算快，如果主要用户在国内，可以加国内 CDN 或换国内云。
+
+## 结尾
+
+到这儿，整套 Cloudflare 用法就串起来了：
+
+- 前端 → **Pages**
+- 后端 → **Workers**（Hono）
+- 数据库 → **D1**（SQLite + Drizzle）
+- 管理 → **Wrangler**
+
+这套组合对个人项目和小型应用非常友好：免费额度大、部署快、免运维，一条命令上线。如果以后项目变大，Cloudflare 还有 R2（文件存储）、KV（缓存）、Workers AI（跑 AI 模型）、Durable Objects（有状态服务）可以继续用，升级路径也是现成的。
+
+有问题欢迎在评论区交流，也欢迎把这篇分享给想入门 Cloudflare 的朋友 🚀

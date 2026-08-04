@@ -8,7 +8,6 @@ import {
   Sparkles,
   BookOpen,
   Wrench,
-  Users,
   User,
   Plane,
   ChevronDown,
@@ -53,7 +52,7 @@ const PROJECTS = [
 const RADIAL_MENU_ITEMS = [
   { icon: BookOpen, label: '项目文章', href: '/posts', color: '#60a5fa', desc: '技术笔记、踩坑记录和长期写作。' },
   { icon: Wrench, label: '实用工具', href: '/tools', color: '#34d399', desc: '一些能直接打开使用的小工具。' },
-  { icon: Users, label: '友情链接', href: '/friends', color: '#fbbf24', desc: '朋友们的站点和我常看的角落。' },
+  { icon: PenTool, label: '工作日志', href: '/logs', color: '#fbbf24', desc: '记录最近在做什么、做完了什么。' },
   { icon: User, label: '关于我', href: '/about', color: '#f472b6', desc: '一点背景、联系入口和留言板。' },
   { icon: Plane, label: '旅游足迹', href: '/travel', color: '#a78bfa', desc: '把去过的地方和路上的片段收起来。' },
 ]
@@ -92,19 +91,19 @@ const HOT_CHANNEL_CONTENT = [
     ],
   },
   {
-    eyebrow: 'Friend Radar',
-    metric: '12 links',
-    trend: '+6%',
+    eyebrow: 'Work Log',
+    metric: '3 updates',
+    trend: '+new',
     hero: {
-      title: '常看的开发者角落',
-      desc: '收集一些风格稳定、内容真诚、值得长期订阅的个人站点。',
-      href: '/friends',
-      tag: '链接',
+      title: '最近我在做什么',
+      desc: '记录博客、工具、文章和实验项目的近况，方便快速了解当前进展。',
+      href: '/logs',
+      tag: '动态',
     },
-    keywords: ['独立博客', '设计系统', '开发日志', '灵感', '长期订阅'],
+    keywords: ['开发日志', 'MineMap', '文章更新', '实验项目', '长期维护'],
     items: [
-      { title: 'React 框架与生态', meta: 'updated' },
-      { title: '独立开发日志', meta: 'reading' },
+      { title: '旅行地图切到 MineMap', meta: 'shipped' },
+      { title: '公开工作日志页', meta: 'building' },
     ],
   },
   {

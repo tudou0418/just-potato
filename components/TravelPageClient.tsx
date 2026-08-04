@@ -1,17 +1,15 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  MapPin, 
   Calendar, 
   CreditCard, 
   Clock, 
-  Globe, 
   Plane,
   Train,
   Car
 } from 'lucide-react';
-import * as echarts from 'echarts';
+import TravelMineMap from '@/components/TravelMineMap';
 
 interface TravelData {
   id: number;
@@ -57,82 +55,6 @@ const CountUp = ({ end, duration = 1000, prefix = "" }: CountUpProps) => {
   }, [end, duration]);
 
   return <span>{prefix}{count.toLocaleString()}</span>;
-};
-
-interface TravelMapProps {
-  data: TravelData[];
-}
-
-const TravelMap = ({ data }: TravelMapProps) => {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const chartInstance = useRef<echarts.ECharts | null>(null);
-
-  useEffect(() => {
-    const initChart = async () => {
-      if (!chartRef.current) return;
-      const response = await fetch('https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/china.json');
-      const chinaJson = await response.json();
-      echarts.registerMap('china', chinaJson);
-
-      if (!chartInstance.current) {
-        chartInstance.current = echarts.init(chartRef.current);
-      }
-
-      const isDark = document.documentElement.classList.contains('dark');
-      const primaryColor = '#2563eb';
-      const areaColor = isDark ? '#1e293b' : '#f8fafc';
-      const borderColor = isDark ? '#334155' : '#e2e8f0';
-
-      const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      const lineData = sortedData.slice(0, -1).map((item, i) => {
-        const nextItem = sortedData[i + 1];
-        if (!item.coord || !nextItem || !nextItem.coord) return null;
-        return {
-          coords: [item.coord.slice(0, 2), nextItem.coord.slice(0, 2)]
-        };
-      }).filter((item): item is { coords: [number, number][] } => item !== null);
-
-      const option: echarts.EChartsOption = {
-        backgroundColor: 'transparent',
-        geo: {
-          map: 'china', roam: false, label: { show: false },
-          itemStyle: { areaColor, borderColor, borderWidth: 1 },
-          emphasis: { itemStyle: { areaColor: isDark ? '#1e3a8a' : '#eff6ff' } }
-        },
-        series: [
-          {
-            type: 'lines', zlevel: 1,
-            effect: { show: true, period: 4, trailLength: 0.7, color: primaryColor, symbolSize: 3 },
-            lineStyle: { color: primaryColor, width: 1, opacity: 0.2, curveness: 0.2 },
-            data: lineData
-          },
-          {
-            type: 'lines', zlevel: 2, symbol: ['none', 'arrow'], symbolSize: 6,
-            lineStyle: { color: primaryColor, width: 1, opacity: 0.4, curveness: 0.2 },
-            data: lineData
-          },
-          {
-            type: 'effectScatter', coordinateSystem: 'geo', zlevel: 3,
-            data: data.filter(item => item.coord).map(item => ({ name: item.location, value: item.coord })),
-            symbolSize: 8, rippleEffect: { brushType: 'stroke', scale: 4 },
-            itemStyle: { color: primaryColor }
-          }
-        ]
-      };
-      chartInstance.current.setOption(option, true);
-    };
-
-    initChart();
-    const handleResize = () => chartInstance.current?.resize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [data]);
-
-  return (
-    <div className="relative w-full aspect-[16/9] md:aspect-[21/9] bg-ui-surface border border-ui-border rounded-[3rem] overflow-hidden mb-20 shadow-sm">
-      <div ref={chartRef} className="w-full h-full" />
-    </div>
-  );
 };
 
 interface TransportIconProps {
@@ -264,11 +186,12 @@ const TravelCard = ({ spot, isActive, onHover, style, nextDirection, isLast }: T
 
 interface StatsAndFilterProps {
   data: TravelData[];
+  years: string[];
   selectedYear: string;
   onYearChange: (year: string) => void;
 }
 
-const StatsAndFilter = ({ data, selectedYear, onYearChange }: StatsAndFilterProps) => {
+const StatsAndFilter = ({ data, years, selectedYear, onYearChange }: StatsAndFilterProps) => {
   const stats = useMemo(() => ({
     cities: data.length,
     days: data.reduce((a, b) => a + (b.days || 0), 0),
@@ -301,7 +224,7 @@ const StatsAndFilter = ({ data, selectedYear, onYearChange }: StatsAndFilterProp
       </div>
 
       <div className="inline-flex bg-ui-surface border border-ui-border p-1.5 rounded-full shadow-sm">
-        {["All", "2024", "2023"].map(year => (
+        {['All', ...years].map(year => (
           <button
             key={year}
             onClick={() => onYearChange(year)}
@@ -340,6 +263,10 @@ export default function TravelPageClient({ travels }: TravelPageClientProps) {
     return raw.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [selectedYear, travels]);
 
+  const yearOptions = useMemo(() => {
+    return Array.from(new Set(travels.map((item) => item.year))).sort((a, b) => Number(b) - Number(a));
+  }, [travels]);
+
   const getSnakeInfo = (index: number, currentCols: number, total: number) => {
     const row = Math.floor(index / currentCols);
     const colInRow = index % currentCols;
@@ -366,9 +293,9 @@ export default function TravelPageClient({ travels }: TravelPageClientProps) {
     <div className="min-h-screen bg-ui-surface text-ui-text font-sans selection:bg-brand selection:text-white pb-32 overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-6 py-16 md:py-20 lg:px-16">
         
-        <StatsAndFilter data={filteredData} selectedYear={selectedYear} onYearChange={setSelectedYear} />
+        <StatsAndFilter data={filteredData} years={yearOptions} selectedYear={selectedYear} onYearChange={setSelectedYear} />
 
-        <TravelMap data={filteredData} />
+        <TravelMineMap data={filteredData} />
 
         <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-20 gap-y-32">
           {filteredData.map((spot, index) => {

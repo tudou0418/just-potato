@@ -47,10 +47,24 @@ const TAG_COLORS = [
   'dark:bg-sky-400/15 dark:text-sky-300 bg-sky-500/10 text-sky-600',
 ]
 
+// 根据 slug 生成稳定伪随机数，保证服务端与客户端渲染一致（避免 hydration mismatch）
+function hashString(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0
+  }
+  return hash
+}
+
 const PostCard = ({ post, index }: PostCardProps) => {
   const [isHovered, setIsHovered] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 200) + 10)
+
+  // 点赞/评论/浏览为演示用伪数据，用 slug 哈希保证 SSR 与客户端一致
+  const seed = hashString(post.slug)
+  const [likeCount, setLikeCount] = useState(() => 10 + (seed % 200))
+  const commentCount = 1 + (seed % 30)
+  const viewCount = 50 + (seed % 500)
 
   const colorIdx = index % GRADIENT_PALETTES_DARK.length
 
@@ -187,12 +201,12 @@ const PostCard = ({ post, index }: PostCardProps) => {
 
               <span className={`flex items-center gap-1 text-[10px] dark:text-white/30 text-ui-text-muted`}>
                 <MessageCircle size={12} />
-                {Math.floor(Math.random() * 30) + 1}
+                {commentCount}
               </span>
 
               <span className={`flex items-center gap-1 text-[10px] dark:text-white/30 text-ui-text-muted`}>
                 <Eye size={12} />
-                {Math.floor(Math.random() * 500) + 50}
+                {viewCount}
               </span>
             </div>
 

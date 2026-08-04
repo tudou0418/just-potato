@@ -1,0 +1,354 @@
+---
+title: "MineMap 旅行地图 Demo：WMTS、Marker 与轨迹线的完整实现"
+date: "2026-08-03"
+category: "项目实战"
+readTime: "12 min"
+description: "基于博客旅行页，记录 MineMap 的 SDK 加载、官方在线地图、WMTS 底图、自定义 React Marker 和 GeoJSON 旅行轨迹实现。"
+tags: ["MineMap", "WMTS", "GeoJSON", "React", "地图"]
+---
+
+# MineMap 旅行地图 Demo：WMTS、Marker 与轨迹线的完整实现
+
+这篇笔记记录博客旅行页从 ECharts 中国地图切换到 MineMap 的过程。
+
+目标不是做一个复杂的大屏，而是把一个地图 Demo 拆成几块可以复用的能力：
+
+- 加载 MineMap SDK；
+- 使用 MineMap 官方在线 Style；
+- 在没有在线服务时使用 WMTS 栅格底图；
+- 用 React 组件渲染自定义 Marker；
+- 用 GeoJSON `LineString` 连接旅行点；
+- 让地图具备本地 Mock 和真实在线两种运行模式。
+
+配套实现位于：
+
+```txt
+components/TravelMineMap.tsx
+.env.example
+content/travels/*.mdx
+```
+
+## 先看 Demo
+
+博客的旅行页面就是这篇笔记的运行示例：
+
+```txt
+/travel
+```
+
+当前数据使用真实旅行记录，包括北海、涠洲岛、湖南、玉龙雪山、仙女山和彭水。地图点位使用经纬度，页面会按照旅行日期排序，并把相邻点连接起来。
+
+<Callout type="info" title="先明确一个边界">
+当前轨迹是“点到点直线”，表达旅行顺序，不是道路导航轨迹。如果需要真实驾车或铁路路径，还需要接入路径规划服务，或者导入 GPS 轨迹文件。
+</Callout>
+
+## 一、地图组件的职责
+
+地图组件不要直接关心文章正文或旅行卡片的布局，它只接收标准化的点位数据：
+
+```ts
+type TravelPoint = {
+  id: number
+  title: string
+  location: string
+  coord: [number, number, number]
+  date: string
+  days: number
+  transport: 'plane' | 'train' | 'car'
+}
+```
+
+`coord` 使用 `[经度, 纬度, 高度]`。MineMap 和 GeoJSON 实际只使用前两个值：
+
+```ts
+point.coord.slice(0, 2)
+```
+
+这样地图和旅行内容之间只有一个稳定的数据契约，后续更换数据来源时，不需要重写地图初始化逻辑。
+
+## 二、MineMap SDK 动态加载
+
+MineMap 是浏览器端地图 SDK，因此组件使用 `'use client'`，并在 `useEffect` 中动态插入 CSS 和 JS：
+
+```ts
+function loadMineMap() {
+  if (window.minemap) return Promise.resolve(window.minemap)
+  if (minemapPromise) return minemapPromise
+
+  minemapPromise = Promise.all([
+    loadStyle(`${MINEMAP_BASE}/minemap.css`),
+    loadScript(`${MINEMAP_BASE}/minemap.js`),
+  ]).then(() => {
+    if (!window.minemap) {
+      throw new Error('MineMap loaded, but window.minemap is missing.')
+    }
+    return window.minemap
+  })
+
+  return minemapPromise
+}
+```
+
+这里有两个关键点：
+
+1. 用 `window.minemap` 判断 SDK 是否已经加载，避免重复插入资源。
+2. 用模块级 Promise 缓存加载过程，避免 React 重渲染时并发加载多次。
+
+如果脚本加载失败，需要把 Promise 重置为 `null`，这样用户重新进入页面时仍然可以再次尝试。
+
+## 三、官方在线模式配置
+
+当前博客没有访问业务项目的内网地址。在线模式使用 MineMap 官方 SDK 和官方地图服务：
+
+```env
+NEXT_PUBLIC_MINEMAP_USE_MOCK=false
+NEXT_PUBLIC_MINEMAP_USE_ONLINE=true
+NEXT_PUBLIC_MINEMAP_BASE=https://minemap.minedata.cn/minemapapi/v2.1.1
+NEXT_PUBLIC_MINEMAP_APP_KEY=填写自己的 appKey
+NEXT_PUBLIC_MINEMAP_SOLUTION=11002
+```
+
+运行时把 MineMap 的服务域名和认证信息设置到 SDK：
+
+```ts
+minemap.domainUrl = 'https://minedata.cn'
+minemap.dataDomainUrl = 'https://minedata.cn'
+minemap.serverDomainUrl = 'https://ol-data.minedata.cn'
+minemap.spriteUrl = 'https://minedata.cn/minemapapi/v2.1.1/sprite/sprite'
+minemap.serviceUrl = 'https://service.minedata.cn/service'
+minemap.key = MINEMAP_APP_KEY
+minemap.appKey = MINEMAP_APP_KEY
+minemap.solution = MINEMAP_SOLUTION
+```
+
+初始化地图时使用官方 Style，并指定 `MERCATOR` 投影：
+
+```ts
+const map = new minemap.Map({
+  container: containerRef.current,
+  style: `https://service.minedata.cn/map/solu/style/${MINEMAP_SOLUTION}`,
+  center,
+  zoom: 4,
+  projection: 'MERCATOR',
+})
+```
+
+认证 key 只放在本地 `.env.local`，不要提交到文章、仓库或 Obsidian。
+
+## 四、WMTS 栅格底图
+
+除了官方 Style，组件还保留了 WMTS 模式，便于接入自己的地图服务。WMTS URL 使用 MineMap Tile Source 的 `{z}`、`{x}`、`{y}` 占位符：
+
+```ts
+function buildWmtsTileUrl(layer: 'basemap' | 'label') {
+  return `${WMTS_BASE}/service/map/wmts-raster` +
+    `?service=WMTS&version=1.0.0&request=GetTile` +
+    `&layer=${layer}&format=image/png` +
+    `&style=${MAP_STYLE}&tilematrixset=3857` +
+    `&tilematrix={z}&tilerow={y}&tilecol={x}`
+}
+```
+
+地图加载完成后，再添加栅格 Source 和 Layer：
+
+```ts
+map.addSource('travel-basemap', {
+  type: 'raster',
+  scheme: 'wmts',
+  tileSize: 256,
+  tiles: [buildWmtsTileUrl('basemap')],
+})
+
+map.addLayer({
+  id: 'travel-basemap',
+  type: 'raster',
+  source: 'travel-basemap',
+  minzoom: 1,
+  maxzoom: 20,
+})
+```
+
+标注层单独作为一个 Source，可以控制它位于底图之上，同时保持路线和 Marker 的层级更高。
+
+## 五、自定义 React Marker
+
+MineMap 的 `Marker` 支持传入自定义 DOM。这里没有使用默认 Marker，而是创建一个 DOM 容器，再把 React 组件挂载进去：
+
+```ts
+const container = document.createElement('div')
+container.className = 'travel-marker-shell'
+
+const root = createRoot(container)
+root.render(<TravelMarker point={point} active={false} />)
+
+const marker = new minemap.Marker({
+  element: container,
+  offset: [-18, -42],
+})
+  .setLngLat(point.coord.slice(0, 2))
+  .addTo(map)
+```
+
+这种方式的好处是 Marker 可以继续使用 React 的 JSX、状态和图标组件。鼠标悬停时更新 `activeId`，再重新渲染对应 Marker：
+
+```ts
+root.render(
+  <TravelMarker
+    point={point}
+    active={activeId === point.id}
+  />
+)
+```
+
+组件销毁时必须同时移除 MineMap Marker 和 React Root，否则切换筛选条件后可能留下 DOM 或事件引用：
+
+```ts
+markersRef.current.forEach((marker) => marker.remove())
+markerRootsRef.current.forEach((root) => root.unmount())
+mapRef.current?.remove()
+```
+
+## 六、GeoJSON 旅行轨迹
+
+旅行轨迹使用 GeoJSON `FeatureCollection`，每相邻两个点生成一个 `LineString`：
+
+```ts
+function buildRouteGeoJSON(points: TravelPoint[]) {
+  return {
+    type: 'FeatureCollection',
+    features: points.slice(0, -1).map((point, index) => ({
+      type: 'Feature',
+      properties: {
+        from: point.location,
+        to: points[index + 1].location,
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          point.coord.slice(0, 2),
+          points[index + 1].coord.slice(0, 2),
+        ],
+      },
+    })),
+  }
+}
+```
+
+地图初始化完成后添加一个 GeoJSON Source，再叠加两条线：
+
+```ts
+map.addSource('travel-route', {
+  type: 'geojson',
+  data: buildRouteGeoJSON(sortedData),
+})
+
+map.addLayer({
+  id: 'travel-route-glow',
+  type: 'line',
+  source: 'travel-route',
+  paint: {
+    'line-color': '#38BDF8',
+    'line-width': 5,
+    'line-opacity': 0.22,
+  },
+})
+
+map.addLayer({
+  id: 'travel-route-line',
+  type: 'line',
+  source: 'travel-route',
+  paint: {
+    'line-color': '#2563EB',
+    'line-width': 2,
+    'line-opacity': 0.78,
+    'line-dasharray': [2, 2],
+  },
+})
+```
+
+两层路线的作用是让线条既有发光效果，又保留清晰的虚线主体。
+
+## 七、为什么要保留 Mock 模式
+
+真实地图依赖 SDK、Style、WMTS 服务和 appKey。开发时如果这些资源不可用，页面就无法验证 Marker、路线和筛选逻辑。
+
+因此组件默认使用本地 Mock：
+
+```env
+NEXT_PUBLIC_MINEMAP_USE_MOCK=true
+```
+
+Mock 模式不请求任何地图服务，只使用：
+
+- 本地点位投影；
+- SVG 路线；
+- React 自定义 Marker；
+- 本地 hover 和定位交互。
+
+切到真实 MineMap 时才设置：
+
+```env
+NEXT_PUBLIC_MINEMAP_USE_MOCK=false
+```
+
+这个开关把“地图服务问题”和“业务交互问题”分开了，调试效率会高很多。
+
+## 八、这次实现中最容易出错的地方
+
+### 1. 不要把业务项目内网地址写进博客
+
+博客是独立项目，不能默认请求大屏项目的内网 SDK 或 WMTS。需要在线地图时，应使用明确配置的官方服务或部署环境服务。
+
+### 2. 不要在服务端初始化地图
+
+MineMap 依赖 `window` 和 DOM 容器，必须在 Client Component 的生命周期中初始化。
+
+### 3. 地图必须等 `load` 后再添加图层
+
+Source 和 Layer 在地图样式未完成加载时添加，容易出现资源不存在或图层顺序异常。
+
+### 4. 坐标顺序是经度、纬度
+
+项目统一使用：
+
+```ts
+[longitude, latitude, altitude]
+```
+
+不要写成 `[latitude, longitude]`。
+
+### 5. 筛选后要重新排序
+
+地图轨迹表达的是时间顺序，而旅行卡片页面使用倒序展示。因此 `TravelMineMap` 内部会再次按日期升序排序：
+
+```ts
+const sortedData = data
+  .filter((item) => item.coord.length >= 2)
+  .sort(
+    (a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+```
+
+## 九、后续可以继续扩展什么
+
+- 用真实 GPS 文件替换中心点直线；
+- 按交通方式显示飞机、火车或驾车图标；
+- 点击路线段显示出发地、目的地和旅行日期；
+- 为路线增加时间动画；
+- 使用聚合 Marker 处理大量点位；
+- 通过服务端接口返回旅行数据；
+- 增加地图加载、资源失败和降级日志。
+
+## 总结
+
+这个 Demo 的核心不是某一个 MineMap API，而是把地图拆成几个清晰的数据层：
+
+1. 旅行 MDX 提供点位数据；
+2. React 负责筛选和 Marker UI；
+3. MineMap 负责地图容器和交互；
+4. WMTS 或官方 Style 负责底图；
+5. GeoJSON 负责路线表达；
+6. Mock 模式保证本地开发不被地图服务阻塞。
+
+这种拆分方式适合继续扩展成项目大屏、轨迹回放、巡检路线或地理信息可视化页面。

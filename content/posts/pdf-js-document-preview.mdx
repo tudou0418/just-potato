@@ -1,0 +1,520 @@
+---
+title: "用 pdf.js 做一个浏览器里的 PDF 文档预览"
+date: "2026-07-31"
+category: "前端实战"
+readTime: "10 min"
+description: "从一个本地 PDF 预览 demo 出发，讲清楚 pdf.js 的 worker、文件读取、页面渲染、缩放和翻页逻辑。"
+tags: ["pdf.js", "JavaScript", "文档预览", "Canvas", "前端"]
+---
+
+# 用 pdf.js 做一个浏览器里的 PDF 文档预览
+
+很多后台系统都会遇到“在线预览文档”的需求。
+
+比如用户上传了合同、报销单、旅行凭证、说明书，我们不希望用户每次都下载到本地再打开，而是希望在网页里直接看。
+
+这篇文章用一个最小可运行的 PDF 预览 demo，讲清楚如何用 `pdf.js` 在浏览器里完成文档预览。
+
+看完之后，你应该能自己写出一个支持：
+
+- 选择 PDF 文件
+- 拖拽上传 PDF
+- 渲染所有页面
+- 放大、缩小、重置
+- 上一页、下一页、跳转页码
+- 高清屏不模糊
+
+的预览器。
+
+<Callout type="info" title="先说结论">
+pdf.js 的核心不是把 PDF 变成 HTML，而是把 PDF 的每一页渲染到 canvas 上。你可以把它理解成：先读取 PDF 文件，再拿到某一页，最后把这一页画到 canvas。
+</Callout>
+
+## 先看效果
+
+下面就是这篇文章配套的可运行 demo。你可以直接点击「选择文件」，或者把本地 PDF 拖进上传区。
+
+<div className="not-prose my-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <div className="text-sm font-semibold text-slate-900">PDF 在线预览 Demo</div>
+      <div className="text-xs text-slate-500">支持本地 PDF 选择、拖拽上传、缩放和页码跳转</div>
+    </div>
+    <a
+      href="/demos/pdf-js-preview/index.html"
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
+    >
+      打开完整效果
+    </a>
+  </div>
+  <iframe
+    src="/demos/pdf-js-preview/index.html"
+    title="PDF 在线预览 Demo"
+    className="h-[560px] w-full bg-white"
+  />
+</div>
+
+完整代码也已经放在项目里：
+
+```txt filename="demo-source.txt"
+public/demos/pdf-js-preview/index.html
+```
+
+这样以后回看文章时，既可以直接看运行效果，也可以从项目里把这份 HTML 单文件 demo 拿出来复用。
+
+## pdf.js 是什么
+
+`pdf.js` 是 Mozilla 做的 PDF 解析和渲染库。浏览器自己虽然可以打开 PDF，但如果我们想做自己的工具栏、翻页、缩放、权限控制、业务 UI，就需要用 pdf.js 接管渲染过程。
+
+最核心的流程只有三步：
+
+1. 配置 worker。
+2. 用 `getDocument()` 加载 PDF。
+3. 用 `page.render()` 把某一页画到 canvas。
+
+先看一个最小版本。
+
+```html filename="index.html"
+<canvas id="pdfCanvas"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+  async function renderPdf(url) {
+    const loadingTask = pdfjsLib.getDocument(url);
+    const pdf = await loadingTask.promise;
+
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({ scale: 1.5 });
+
+    const canvas = document.getElementById('pdfCanvas');
+    const context = canvas.getContext('2d');
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({
+      canvasContext: context,
+      viewport
+    }).promise;
+  }
+
+  renderPdf('./demo.pdf');
+</script>
+```
+
+这段代码已经能把第一页渲染出来。
+
+但真实业务里，我们通常不是写死一个 URL，而是让用户选择本地文件。所以接下来把它改成文件上传版本。
+
+## 页面结构
+
+一个 PDF 预览器通常需要三块区域：
+
+- 顶部工具栏：选择文件、缩放、翻页、页码。
+- 上传区：用户还没选择文件时显示。
+- 预览区：用户选择文件后显示 canvas 页面。
+
+HTML 可以先这样搭：
+
+```html filename="index.html"
+<header>
+  <h1>PDF 在线预览 Demo</h1>
+</header>
+
+<div class="toolbar">
+  <button id="openBtn">选择文件</button>
+  <button id="zoomIn" disabled>放大</button>
+  <button id="zoomOut" disabled>缩小</button>
+  <button id="reset" disabled>重置</button>
+  <button id="prevPage" disabled>上一页</button>
+  <button id="nextPage" disabled>下一页</button>
+
+  <span>
+    第 <input id="pageInput" type="number" value="1" min="1" disabled />
+    页 / 共 <span id="totalPages">0</span> 页
+  </span>
+
+  <span id="fileName">未选择文件</span>
+  <input id="fileInput" type="file" accept=".pdf" hidden />
+</div>
+
+<main>
+  <div id="dropZone">
+    拖拽 PDF 文件到这里，或点击选择文件
+  </div>
+
+  <div id="previewWrap" hidden>
+    <div id="pdfContainer"></div>
+  </div>
+</main>
+```
+
+这里最重要的是 `pdfContainer`。
+
+我们后面会给每一页创建一个 canvas，然后全部放进这个容器里。
+
+## 引入 pdf.js 和配置 worker
+
+如果直接用 CDN，可以这样引入：
+
+```html filename="index.html"
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+</script>
+```
+
+`workerSrc` 这行不要省。
+
+pdf.js 解析 PDF 是比较重的工作，如果不放到 worker 里，复杂 PDF 很容易卡住主线程，页面会变得不跟手。
+
+<Callout type="warning" title="最常见的坑">
+pdf.js 的主库和 worker 最好使用同一个版本。比如主库用 3.11.174，worker 也用 3.11.174。版本不一致时，可能出现奇怪的加载失败。
+</Callout>
+
+如果你在 Vite 或现代打包工具里使用，可以把 worker 当成 URL 引入：
+
+```ts filename="pdf-worker.ts"
+import { GlobalWorkerOptions } from 'pdfjs-dist';
+import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+GlobalWorkerOptions.workerSrc = workerSrc;
+```
+
+## 读取用户选择的 PDF 文件
+
+用户选择的是本地文件，不能直接传字符串路径给 pdf.js。我们要先用 `FileReader` 把文件读成 `ArrayBuffer`。
+
+```js filename="index.html"
+const fileInput = document.getElementById('fileInput');
+const openBtn = document.getElementById('openBtn');
+
+openBtn.addEventListener('click', () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    handleFile(file);
+  }
+});
+
+function handleFile(file) {
+  const isPdf =
+    file.name.toLowerCase().endsWith('.pdf') ||
+    file.type === 'application/pdf';
+
+  if (!isPdf) {
+    alert('仅支持 PDF 文件');
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = (event) => {
+    loadPdf(event.target.result);
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+```
+
+这里有两个动作：
+
+1. 校验文件是不是 PDF。
+2. 把文件读成 `ArrayBuffer`。
+
+接下来就可以交给 pdf.js 了。
+
+## 加载 PDF 文档
+
+pdf.js 推荐把二进制数据包成 `Uint8Array` 再传进去：
+
+```js filename="index.html"
+let pdfDoc = null;
+let currentPage = 1;
+let currentZoom = 1.2;
+
+async function loadPdf(arrayBuffer) {
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(arrayBuffer)
+  });
+
+  pdfDoc = await loadingTask.promise;
+
+  currentPage = 1;
+  totalPages.textContent = pdfDoc.numPages;
+  pageInput.max = pdfDoc.numPages;
+  pageInput.value = 1;
+
+  dropZone.hidden = true;
+  previewWrap.hidden = false;
+
+  await renderAllPages();
+}
+```
+
+`loadingTask.promise` 成功后，我们拿到的是一个 PDF 文档对象。
+
+这个对象最常用的两个能力是：
+
+- `pdfDoc.numPages`：总页数。
+- `pdfDoc.getPage(pageNumber)`：读取某一页。
+
+## 把每一页渲染成 canvas
+
+为了让用户可以连续滚动查看，我们可以一次把所有页面渲染出来。
+
+```js filename="index.html"
+async function renderAllPages() {
+  pdfContainer.innerHTML = '';
+
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const canvas = document.createElement('canvas');
+
+    pdfContainer.appendChild(canvas);
+    await renderPage(page, canvas);
+  }
+}
+```
+
+每一页的渲染逻辑是：
+
+```js filename="index.html"
+async function renderPage(page, canvas) {
+  const viewport = page.getViewport({
+    scale: currentZoom
+  });
+
+  const context = canvas.getContext('2d');
+
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  await page.render({
+    canvasContext: context,
+    viewport
+  }).promise;
+}
+```
+
+到这里，PDF 已经可以预览了。
+
+但你会发现一个问题：在 MacBook、手机或者高分屏上，canvas 可能有点糊。
+
+## 让高清屏不模糊
+
+canvas 的清晰度取决于两个尺寸：
+
+- `canvas.width / canvas.height`：真实绘制尺寸。
+- `canvas.style.width / canvas.style.height`：页面显示尺寸。
+
+高分屏上，我们需要把真实绘制尺寸乘以 `devicePixelRatio`，但页面显示尺寸保持不变。
+
+```js filename="index.html"
+async function renderPage(page, canvas) {
+  const viewport = page.getViewport({
+    scale: currentZoom
+  });
+
+  const context = canvas.getContext('2d');
+  const outputScale = window.devicePixelRatio || 1;
+
+  canvas.width = Math.floor(viewport.width * outputScale);
+  canvas.height = Math.floor(viewport.height * outputScale);
+
+  canvas.style.width = Math.floor(viewport.width) + 'px';
+  canvas.style.height = Math.floor(viewport.height) + 'px';
+
+  const transform =
+    outputScale !== 1
+      ? [outputScale, 0, 0, outputScale, 0, 0]
+      : null;
+
+  await page.render({
+    canvasContext: context,
+    viewport,
+    transform
+  }).promise;
+}
+```
+
+这一步很关键。很多 PDF 预览 demo 看起来能用，但一到高清屏就发糊，通常就是少了这个处理。
+
+## 做缩放
+
+缩放的本质很简单：改 `currentZoom`，然后重新渲染。
+
+```js filename="index.html"
+zoomIn.addEventListener('click', () => {
+  currentZoom = Math.min(currentZoom + 0.2, 3);
+  rerender();
+});
+
+zoomOut.addEventListener('click', () => {
+  currentZoom = Math.max(currentZoom - 0.2, 0.5);
+  rerender();
+});
+
+reset.addEventListener('click', () => {
+  currentZoom = 1.2;
+  rerender();
+});
+
+async function rerender() {
+  if (!pdfDoc) return;
+  await renderAllPages();
+}
+```
+
+这里给缩放加了上下限：
+
+- 最小 `0.5`
+- 最大 `3`
+
+这样可以避免用户连续点击导致 canvas 太小或太大。
+
+## 做翻页
+
+如果你已经把所有页渲染出来了，翻页就不需要重新渲染，只要滚动到对应 canvas。
+
+```js filename="index.html"
+function scrollToPage(pageNumber) {
+  pageInput.value = pageNumber;
+
+  const canvases = pdfContainer.querySelectorAll('canvas');
+  const target = canvases[pageNumber - 1];
+
+  if (target) {
+    target.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+}
+```
+
+上一页、下一页就是更新 `currentPage`：
+
+```js filename="index.html"
+prevPage.addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    scrollToPage(currentPage);
+  }
+});
+
+nextPage.addEventListener('click', () => {
+  if (pdfDoc && currentPage < pdfDoc.numPages) {
+    currentPage++;
+    scrollToPage(currentPage);
+  }
+});
+
+pageInput.addEventListener('change', () => {
+  const pageNumber = Number(pageInput.value);
+
+  if (pageNumber >= 1 && pageNumber <= pdfDoc.numPages) {
+    currentPage = pageNumber;
+    scrollToPage(pageNumber);
+  }
+});
+```
+
+<Callout type="info" title="翻页的另一种思路">
+如果 PDF 很大，比如几百页，不建议一次渲染所有页面。可以只渲染当前页，翻页时再调用 `getPage()` 和 `render()`。这会牺牲一点翻页速度，但内存更稳。
+</Callout>
+
+## 支持拖拽上传
+
+拖拽上传只是文件选择的另一个入口，最终还是调用同一个 `handleFile(file)`。
+
+```js filename="index.html"
+['dragenter', 'dragover'].forEach((eventName) => {
+  dropZone.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+});
+
+['dragleave', 'drop'].forEach((eventName) => {
+  dropZone.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    dropZone.classList.remove('dragover');
+  });
+});
+
+dropZone.addEventListener('drop', (event) => {
+  const file = event.dataTransfer.files[0];
+
+  if (file) {
+    handleFile(file);
+  }
+});
+```
+
+这样用户可以点击选择文件，也可以把 PDF 直接拖进页面。
+
+## 一个完整的状态设计
+
+这个 demo 里，我会维护三个核心状态：
+
+```js filename="index.html"
+let pdfDoc = null;
+let currentZoom = 1.2;
+let currentPage = 1;
+```
+
+它们分别代表：
+
+- `pdfDoc`：当前加载的 PDF 文档。
+- `currentZoom`：当前缩放比例。
+- `currentPage`：当前页码。
+
+其他 UI 都可以围绕这三个状态变化：
+
+- 文件加载成功后，启用按钮。
+- 缩放变化后，重新渲染。
+- 页码变化后，滚动到对应页面。
+- 加载失败时，显示错误提示。
+
+## 实战里还可以继续优化什么
+
+如果只是做一个后台管理系统里的文档预览，上面的代码已经够用了。
+
+但如果要做成更完整的组件，还可以继续加这些能力：
+
+- 只渲染当前可见页，减少大文件内存占用。
+- 增加搜索文本功能。
+- 增加下载、打印按钮。
+- 增加页缩略图。
+- 增加密码 PDF 的输入处理。
+- 增加加载进度。
+- 把 canvas 渲染结果缓存起来，避免频繁缩放时重复计算。
+
+## 总结
+
+用 pdf.js 做 PDF 预览，最重要的是理解这条链路：
+
+```txt filename="preview-flow.txt"
+用户选择 PDF
+-> FileReader 读取为 ArrayBuffer
+-> pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
+-> pdfDoc.getPage(pageNumber)
+-> page.getViewport({ scale })
+-> page.render({ canvasContext, viewport, transform })
+-> canvas 显示在页面中
+```
+
+只要这条链路清楚，拖拽上传、缩放、翻页、重置都只是围绕状态做交互。
+
+如果你第一次写 PDF 预览，不要一上来就做复杂组件。先把第一页渲染到 canvas，再做所有页，再做缩放和翻页。这样每一步都能看见结果，调起来也更踏实。
+

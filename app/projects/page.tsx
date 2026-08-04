@@ -52,9 +52,9 @@ const PROJECTS = [
   {
     id: 'travel-map',
     title: 'Travel Footprint',
-    description: '记录旅行足迹的交互式地图，用 Globe.gl 做的3D地球。',
-    longDescription: '把去过的地方标注在3D地球上，每次点开都能重温那段旅程。支持自动播放飞行路线。',
-    tags: ['Globe.gl', 'React', 'D3'],
+    description: '记录旅行足迹的交互式地图，用 MineMap + WMTS 做真实地图底图。',
+    longDescription: '把去过的地方标注在 MineMap 底图上，用自定义 Marker 和路线图层重温每一段旅程。',
+    tags: ['MineMap', 'WMTS', 'React'],
     category: 'web',
     status: 'building',
     links: { demo: '/travel' },

@@ -1,0 +1,419 @@
+---
+title: "bpmn.js 入门到二次开发：我如何理解一个流程编辑器"
+date: "2026-07-30"
+category: "项目实战"
+readTime: "12 min"
+description: "整理我在 bpmnDemo 里的学习沉淀：从 Modeler、XML、eventBus 到 palette、context pad 和 moddle 的完整理解路径。"
+tags: ["bpmn.js", "React", "TypeScript", "流程编辑器", "二次开发"]
+---
+
+# bpmn.js 入门到二次开发：我如何理解一个流程编辑器
+
+学 bpmn.js 时，我最先卡住的不是 API，而是边界：哪些能力是内置的，哪些来自插件，前端框架到底负责什么，业务二开应该改哪里，最后保存的又是什么。
+
+把这几个问题理顺之后，bpmn.js 就不再像一堆零散 API，而更像一套完整的流程编辑器内核。
+
+## 一句话理解
+
+bpmn.js 的核心不是 DOM，也不是 SVG，而是 `BpmnModeler`。
+
+```ts
+import BpmnModeler from 'bpmn-js/lib/Modeler';
+
+const modeler = new BpmnModeler({
+  container: canvasRef.current
+});
+```
+
+从这一刻开始，画布、拖拽、节点、连线、撤销重做、XML 导入导出，都进入 bpmn.js 自己的体系。React 或 Vue 只是宿主，用来承载容器、按钮、侧边栏和业务状态。
+
+## XML 才是状态源
+
+我现在对 bpmn.js 的第一个强认知就是：流程图真正的状态，不在 React state 里，而在 BPMN XML 里。
+
+导入：
+
+```ts
+async function importDiagram(xml: string) {
+  const modeler = modelerRef.current;
+  if (!modeler) return;
+
+  const { warnings } = await modeler.importXML(xml);
+
+  modeler.get('canvas').zoom('fit-viewport');
+
+  if (warnings.length) {
+    console.warn('BPMN import warnings:', warnings);
+  }
+}
+```
+
+导出：
+
+```ts
+async function saveDiagram() {
+  const modeler = modelerRef.current;
+  if (!modeler) return '';
+
+  const { xml = '' } = await modeler.saveXML({
+    format: true,
+    preamble: true
+  });
+
+  return xml;
+}
+```
+
+BPMN XML 里最关键的有两类信息：
+
+- 流程语义：开始事件、任务、网关、连线等。
+- 图形布局：节点画在哪里、连线怎么走。
+
+也就是说，XML 不是导出结果，而是流程定义本身。
+
+## 服务体系比 DOM 更重要
+
+学习 bpmn.js 的关键，是先知道该找哪个服务。
+
+我最常用的几个是：
+
+- `eventBus`：监听内部事件。
+- `elementRegistry`：查找画布元素。
+- `selection`：获取当前选中元素。
+- `canvas`：控制缩放、视口和 marker。
+- `modeling`：修改流程模型。
+- `bpmnFactory`：创建 BPMN 语义对象。
+- `elementFactory`：创建图形元素。
+- `create`：启动创建流程。
+
+```ts
+const eventBus = modeler.get('eventBus');
+const registry = modeler.get('elementRegistry');
+const selection = modeler.get('selection');
+const canvas = modeler.get('canvas');
+const modeling = modeler.get('modeling');
+```
+
+我对这套服务体系的理解是：只要我想操作流程图，第一反应应该是“有没有对应的 bpmn.js 服务”，而不是去碰 SVG DOM。
+
+## eventBus：观察变化
+
+`eventBus` 很适合做联动。
+
+```ts
+const eventBus = modeler.get('eventBus');
+
+eventBus.on('selection.changed', (event) => {
+  const element = event.newSelection?.[0] ?? null;
+  if (!element) return;
+
+  console.log('选中元素 id:', element.id);
+  console.log('选中元素类型:', element.type);
+  console.log('BPMN 语义对象:', element.businessObject);
+});
+```
+
+它可以用来：
+
+- 选中节点后刷新右侧详情面板。
+- 节点变化后触发自动保存。
+- 记录编辑日志。
+- 做流程校验后的错误定位。
+
+我的理解是，`eventBus` 负责“观察”，不负责“存业务数据”。
+
+## element、businessObject、XML
+
+这三个概念要分开看。
+
+- `element` 偏图形层，负责坐标、尺寸、类型、选中状态。
+- `businessObject` 偏语义层，负责 BPMN 节点本身的含义。
+- XML 是最终持久化结果。
+
+```ts
+eventBus.on('selection.changed', (event) => {
+  const element = event.newSelection?.[0];
+  if (!element) return;
+
+  const businessObject = element.businessObject;
+
+  console.table({
+    elementId: element.id,
+    elementType: element.type,
+    businessType: businessObject.$type,
+    name: businessObject.name ?? '',
+    source: businessObject.sourceRef?.id ?? '',
+    target: businessObject.targetRef?.id ?? ''
+  });
+});
+```
+
+可以简单记成：
+
+- 在画布上找、选、高亮，用 `element`。
+- 理解流程语义，看 `businessObject`。
+- 保存和加载，看 XML。
+
+## elementRegistry 和 canvas
+
+`elementRegistry` 适合查找元素：
+
+```ts
+const registry = modeler.get('elementRegistry');
+const selection = modeler.get('selection');
+
+const task = registry.get('Task_Check');
+if (task) {
+  selection.select(task);
+}
+```
+
+`canvas` 适合控制视口和视觉提示：
+
+```ts
+const canvas = modeler.get('canvas');
+canvas.zoom('fit-viewport');
+```
+
+如果要高亮节点，也可以通过 marker 做：
+
+```ts
+const userTasks = registry.filter((element) => element.type === 'bpmn:UserTask');
+userTasks.forEach((element) => {
+  canvas.addMarker(element, 'task-highlight');
+});
+```
+
+## modeling：修改模型要走它
+
+如果要改流程图，不要直接改 SVG，也不要只改 `businessObject`，优先走 `modeling`。
+
+```ts
+const modeling = modeler.get('modeling');
+const selection = modeler.get('selection');
+const [element] = selection.get();
+
+if (element) {
+  modeling.updateLabel(element, '人工审核');
+}
+```
+
+```ts
+const selectedElements = selection.get();
+if (selectedElements.length) {
+  modeling.removeElements(selectedElements);
+}
+```
+
+这件事很重要，因为 `modeling` 会维护命令体系，画布渲染、事件通知、撤销重做、XML 保存才会一致。
+
+## properties panel：不是普通表单
+
+如果只是展示信息，自己写面板就够了。
+
+但如果要编辑 BPMN 标准字段，或者让字段变更进入 bpmn.js 的命令体系，就该接 `bpmn-js-properties-panel`。
+
+```ts
+import {
+  BpmnPropertiesPanelModule,
+  BpmnPropertiesProviderModule
+} from 'bpmn-js-properties-panel';
+
+import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
+
+const modeler = new BpmnModeler({
+  container: canvasRef.current,
+  propertiesPanel: {
+    parent: propertiesPanelRef.current
+  },
+  additionalModules: [
+    BpmnPropertiesPanelModule,
+    BpmnPropertiesProviderModule
+  ]
+});
+```
+
+我的判断方式很直接：
+
+- 只是展示节点信息：前端自己写面板。
+- 编辑 BPMN 标准属性：用 properties panel。
+- 编辑业务字段并写进 XML：继续研究 moddle descriptor。
+
+## module / provider：二开入口
+
+bpmn.js 的扩展，不是随便往页面加按钮，而是通过 module/provider 注入。
+
+```ts
+export const customModule = {
+  __init__: ['customPaletteProvider'],
+  customPaletteProvider: ['type', CustomPaletteProvider]
+};
+```
+
+```ts
+const modeler = new BpmnModeler({
+  container: canvasRef.current,
+  additionalModules: [customModule]
+});
+```
+
+provider 通过 `$inject` 声明依赖：
+
+```ts
+CustomPaletteProvider.$inject = [
+  'palette',
+  'create',
+  'elementFactory',
+  'bpmnFactory'
+];
+```
+
+理解这层之后，自定义 palette、context pad、renderer、rules、properties provider 就会变成同一类问题。
+
+## 自定义 palette
+
+palette 是左侧的节点创建工具栏。
+
+```ts
+function CustomPaletteProvider(
+  palette,
+  create,
+  elementFactory,
+  bpmnFactory
+) {
+  palette.registerProvider(this);
+
+  this.getPaletteEntries = function () {
+    function createBusinessTask(event) {
+      const businessObject = bpmnFactory.create('bpmn:ServiceTask', {
+        name: '业务自动处理'
+      });
+
+      const shape = elementFactory.createShape({
+        type: 'bpmn:ServiceTask',
+        businessObject
+      });
+
+      create.start(event, shape);
+    }
+
+    return {
+      'create.business-service-task': {
+        group: 'activity',
+        className: 'bpmn-icon-service-task',
+        title: '创建业务自动处理任务',
+        action: {
+          click: createBusinessTask,
+          dragstart: createBusinessTask
+        }
+      }
+    };
+  };
+}
+```
+
+这段代码的核心不是“画一个节点”，而是把业务入口接进 bpmn.js 原有建模机制。
+
+## 自定义 context pad
+
+context pad 更适合放和当前节点强相关的动作。
+
+```ts
+function CustomContextPadProvider(contextPad, modeling) {
+  contextPad.registerProvider(this);
+
+  this.getContextPadEntries = function (element) {
+    return {
+      'mark-business-review': {
+        group: 'edit',
+        className: 'bpmn-icon-user',
+        title: '标记为需复核',
+        action: {
+          click() {
+            const currentName = element.businessObject?.name || element.id;
+            const cleanName = currentName.replace(/^需复核：/u, '');
+
+            modeling.updateLabel(element, `需复核：${cleanName}`);
+          }
+        }
+      }
+    };
+  };
+}
+```
+
+这类能力特别适合：
+
+- 转人工。
+- 配置 SLA。
+- 标记风险。
+- 快速追加节点。
+- 打开业务配置弹窗。
+
+## 业务字段怎么保存
+
+很多需求一开始都只是“给节点改个名字”，但很快就会遇到更真实的问题：
+
+- 负责人是谁？
+- SLA 是多少小时？
+- 表单编码是什么？
+- 审批类型是什么？
+- 调用哪个系统接口？
+
+如果这些只是临时状态，可以放在外部系统里。
+如果它们属于流程定义的一部分，并且要和 BPMN XML 一起保存，就要研究 moddle descriptor。
+
+我的判断标准是：
+
+- 只是显示状态：外部数据即可。
+- 只是临时交互：React state 即可。
+- 是流程定义的一部分：应该进入 BPMN XML。
+- 要进入 BPMN XML：研究 moddle descriptor。
+- 要可视化编辑这些字段：再做自定义 properties panel。
+
+## 一条可落地的路线
+
+如果我要在业务系统里接入 bpmn.js，我会按这个顺序推进：
+
+1. Modeler 挂载、样式引入、XML 导入导出。
+2. 后端保存 BPMN XML，前端打开时 import，保存时 export。
+3. 监听 `selection.changed`，做右侧详情面板。
+4. 做节点定位、高亮、删除、改名、错误定位。
+5. 自定义 palette，限制用户能创建的节点。
+6. 自定义 context pad，把业务操作贴到节点上。
+7. 用 moddle descriptor 保存业务字段。
+8. 用自定义 properties panel 编辑业务字段。
+9. 引入 bpmnlint 或自定义规则做校验。
+10. 做权限和发布控制。
+
+这条路线的好处是，不会一上来就被属性面板、moddle、渲染器这些复杂点拖住。
+
+## 常见误区
+
+### 把 React state 当流程图状态
+
+React state 可以存选中元素、提示信息、XML 快照，但不该替代 bpmn.js 内部模型。保存时还是以 `saveXML()` 为准。
+
+### 直接改 SVG
+
+SVG 只是渲染结果，不是建模入口。修改流程要走 `modeling` 或 command 机制。
+
+### 混淆 element 和 businessObject
+
+`element` 偏画布，`businessObject` 偏语义。画布操作找 element，读写流程语义看 businessObject。
+
+### 忽略 BPMNDI
+
+XML 不只有流程语义，还有图形布局。少了 BPMNDI，节点可能存在，但画布显示会异常。
+
+### 把业务信息都塞进 label
+
+拼进名称可以快速验证思路，但正式项目里不够稳。业务字段应该有稳定结构，最好进入 XML。
+
+## 总结
+
+我现在对 bpmn.js 的理解可以压成一句话：
+
+bpmn.js 二次开发不是围绕 DOM 做事，而是围绕 Modeler 的服务体系做事；导入导出走 XML，观察变化走 `eventBus`，查找元素走 `elementRegistry`，控制选中走 `selection`，视觉标记走 `canvas`，修改模型走 `modeling`，扩展能力走 module/provider。
+
+当这条主线清楚以后，再去看自定义 renderer、moddle descriptor、properties panel、bpmnlint，就不会觉得它们是零散 API，而是同一套编辑器扩展机制的不同方向。

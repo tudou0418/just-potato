@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF 在线预览 Demo（基于 pdf.js）</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: #f5f6fa;
+      color: #2d3436;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #2c3e50;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    header h1 { font-size: 18px; font-weight: 500; }
+    header .tips { font-size: 12px; opacity: 0.8; }
+
+    .toolbar {
+      background: #fff;
+      padding: 12px 24px;
+      border-bottom: 1px solid #ecf0f1;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: #3498db; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #2980b9; }
+    .btn-secondary { background: #ecf0f1; color: #2d3436; }
+    .btn-secondary:hover:not(:disabled) { background: #dfe6e9; }
+    .page-info {
+      font-size: 13px;
+      color: #636e72;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .page-info input {
+      width: 50px;
+      padding: 4px 6px;
+      border: 1px solid #dfe6e9;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .file-name {
+      margin-left: auto;
+      font-size: 13px;
+      color: #636e72;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* 拖拽上传区 */
+    .drop-zone {
+      flex: 1;
+      margin: 24px;
+      border: 2px dashed #b2bec3;
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+    .drop-zone.dragover {
+      border-color: #3498db;
+      background: #ebf5fb;
+      transform: scale(1.005);
+    }
+    .drop-zone .icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #ebf5fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #3498db;
+      margin-bottom: 16px;
+    }
+    .drop-zone .title { font-size: 16px; color: #2d3436; margin-bottom: 6px; }
+    .drop-zone .desc { font-size: 13px; color: #636e72; text-align: center; line-height: 1.6; }
+    .drop-zone input[type=file] { display: none; }
+
+    /* PDF 预览容器 */
+    .preview-wrap {
+      flex: 1;
+      overflow: auto;
+      background: #525659;
+      display: none;
+      padding: 20px 0;
+    }
+    #pdfContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    #pdfContainer canvas {
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      max-width: 100%;
+      height: auto;
+    }
+
+    .status {
+      padding: 10px 24px;
+      font-size: 13px;
+      background: #fff8e1;
+      color: #f57c00;
+      border-bottom: 1px solid #ffe0b2;
+      display: none;
+    }
+    .status.error { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
+    .status.success { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+
+    .loading {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 16px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PDF 在线预览 Demo（基于 pdf.js）</h1>
+    <span class="tips">支持 .pdf 文件 · Word 另存为 PDF 后即可上传预览</span>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn btn-primary" id="openBtn">选择文件</button>
+    <button class="btn btn-secondary" id="zoomIn" disabled>放大</button>
+    <button class="btn btn-secondary" id="zoomOut" disabled>缩小</button>
+    <button class="btn btn-secondary" id="reset" disabled>重置</button>
+    <button class="btn btn-secondary" id="prevPage" disabled>上一页</button>
+    <button class="btn btn-secondary" id="nextPage" disabled>下一页</button>
+    <div class="page-info">
+      第 <input type="number" id="pageInput" value="1" min="1" disabled /> 页 / 共 <span id="totalPages">0</span> 页
+    </div>
+    <span class="file-name" id="fileName">未选择文件</span>
+    <input type="file" id="fileInput" accept=".pdf" />
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="main">
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">+</div>
+      <div class="title">拖拽 .pdf 文件到此处，或点击选择文件</div>
+      <div class="desc">提示：在 Word 中点击「文件 → 另存为」选择 PDF 格式保存后，<br/>把 PDF 文件拖到这里即可预览</div>
+    </div>
+    <div class="preview-wrap" id="previewWrap">
+      <div id="pdfContainer"></div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">正在加载 PDF...</div>
+
+  <!-- 引入 pdf.js -->
+  <!-- 主库 -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>
+    // 1. 配置 pdf.js worker 路径（必须）
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+    const dropZone       = document.getElementById('dropZone');
+    const fileInput      = document.getElementById('fileInput');
+    const openBtn        = document.getElementById('openBtn');
+    const previewWrap    = document.getElementById('previewWrap');
+    const pdfContainer   = document.getElementById('pdfContainer');
+    const fileNameEl     = document.getElementById('fileName');
+    const statusEl       = document.getElementById('status');
+    const loadingEl      = document.getElementById('loading');
+    const zoomInBtn      = document.getElementById('zoomIn');
+    const zoomOutBtn     = document.getElementById('zoomOut');
+    const resetBtn       = document.getElementById('reset');
+    const prevPageBtn    = document.getElementById('prevPage');
+    const nextPageBtn    = document.getElementById('nextPage');
+    const pageInput      = document.getElementById('pageInput');
+    const totalPagesEl   = document.getElementById('totalPages');
+
+    // 状态变量
+    let pdfDoc = null;       // pdf.js 文档对象
+    let currentZoom = 1.2;   // 默认缩放
+    let currentPage = 1;     // 当前页
+
+    // 2. 点击打开文件
+    openBtn.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // 3. 文件选择
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    // 4. 拖拽事件
+    ['dragenter', 'dragover'].forEach(evt =>
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      })
+    );
+    ['dragleave', 'drop'].forEach(evt =>
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      })
+    );
+    dropZone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    // 5. 处理文件
+    function handleFile(file) {
+      // 校验：只支持 PDF
+      const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+      if (!isPdf) {
+        showStatus('仅支持 .pdf 格式文件，请重新选择', 'error');
+        return;
+      }
+
+      fileNameEl.textContent = file.name + '（' + formatSize(file.size) + '）';
+      showLoading(true);
+      showStatus('正在解析 PDF...', '');
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        loadPdf(e.target.result);
+      };
+      reader.onerror = function () {
+        showLoading(false);
+        showStatus('文件读取失败', 'error');
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // 6. 用 pdf.js 加载 PDF 文档
+    function loadPdf(arrayBuffer) {
+      // 6.1 检查库是否加载完成
+      if (typeof pdfjsLib === 'undefined') {
+        showLoading(false);
+        showStatus('pdf.js 库加载失败，请检查网络后刷新页面', 'error');
+        return;
+      }
+
+      // 6.2 加载文档（注意：transferable 需要传 TypedArray）
+      const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+      loadingTask.promise.then(function (doc) {
+        pdfDoc = doc;
+        currentPage = 1;
+        totalPagesEl.textContent = doc.numPages;
+        pageInput.max = doc.numPages;
+        pageInput.value = 1;
+
+        // 切换视图
+        dropZone.style.display = 'none';
+        previewWrap.style.display = 'block';
+
+        // 启用工具栏按钮
+        [zoomInBtn, zoomOutBtn, resetBtn, prevPageBtn, nextPageBtn, pageInput].forEach(b => b.disabled = false);
+
+        // 渲染所有页
+        renderAllPages().then(() => {
+          showLoading(false);
+          showStatus('PDF 加载成功，共 ' + doc.numPages + ' 页', 'success');
+          setTimeout(() => showStatus('', ''), 2000);
+        });
+      }).catch(function (err) {
+        console.error('PDF 加载失败：', err);
+        showLoading(false);
+        const tip = err && err.message ? err.message : String(err);
+        showStatus('PDF 解析失败：' + tip, 'error');
+      });
+    }
+
+    // 7. 渲染所有页（每页一个 canvas）
+    async function renderAllPages() {
+      pdfContainer.innerHTML = '';
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const canvas = document.createElement('canvas');
+        pdfContainer.appendChild(canvas);
+        await renderPage(page, canvas);
+      }
+    }
+
+    // 8. 渲染单页到 canvas
+    async function renderPage(page, canvas) {
+      const viewport = page.getViewport({ scale: currentZoom });
+      const ctx = canvas.getContext('2d');
+
+      // 处理高分辨率屏幕（HiDPI）
+      const outputScale = window.devicePixelRatio || 1;
+      canvas.width  = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width  = Math.floor(viewport.width) + 'px';
+      canvas.style.height = Math.floor(viewport.height) + 'px';
+
+      const renderContext = {
+        canvasContext: ctx,
+        viewport: viewport,
+        transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
+      };
+      await page.render(renderContext).promise;
+    }
+
+    // 9. 缩放控制
+    zoomInBtn.addEventListener('click', () => {
+      currentZoom = Math.min(currentZoom + 0.2, 3);
+      rerender();
+    });
+    zoomOutBtn.addEventListener('click', () => {
+      currentZoom = Math.max(currentZoom - 0.2, 0.5);
+      rerender();
+    });
+    resetBtn.addEventListener('click', () => {
+      currentZoom = 1.2;
+      rerender();
+    });
+    async function rerender() {
+      if (!pdfDoc) return;
+      showLoading(true);
+      await renderAllPages();
+      showLoading(false);
+    }
+
+    // 10. 翻页（滚动到目标页）
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        scrollToPage(currentPage);
+      }
+    });
+    nextPageBtn.addEventListener('click', () => {
+      if (pdfDoc && currentPage < pdfDoc.numPages) {
+        currentPage++;
+        scrollToPage(currentPage);
+      }
+    });
+    pageInput.addEventListener('change', () => {
+      const n = parseInt(pageInput.value, 10);
+      if (n >= 1 && pdfDoc && n <= pdfDoc.numPages) {
+        currentPage = n;
+        scrollToPage(n);
+      }
+    });
+    function scrollToPage(n) {
+      pageInput.value = n;
+      const canvases = pdfContainer.querySelectorAll('canvas');
+      if (canvases[n - 1]) {
+        canvases[n - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // 11. 辅助函数
+    function showStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status' + (type ? ' ' + type : '');
+      statusEl.style.display = msg ? 'block' : 'none';
+    }
+    function showLoading(show) {
+      loadingEl.style.display = show ? 'block' : 'none';
+    }
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+    }
+  </script>
+</body>
+</html>
